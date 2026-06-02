@@ -6,6 +6,14 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		60DAAB222FCF4C4800AC88AA /* FirebaseAnalytics in Frameworks */ = {isa = PBXBuildFile; productRef = 60DAAB212FCF4C4800AC88AA /* FirebaseAnalytics */; };
+		60DAAB242FCF4C4800AC88AA /* FirebaseAppCheck in Frameworks */ = {isa = PBXBuildFile; productRef = 60DAAB232FCF4C4800AC88AA /* FirebaseAppCheck */; };
+		60DAAB262FCF4C4800AC88AA /* FirebaseAuth in Frameworks */ = {isa = PBXBuildFile; productRef = 60DAAB252FCF4C4800AC88AA /* FirebaseAuth */; };
+		60DAAB282FCF4C4800AC88AA /* FirebaseCore in Frameworks */ = {isa = PBXBuildFile; productRef = 60DAAB272FCF4C4800AC88AA /* FirebaseCore */; };
+		60DAAB2A2FCF4C4800AC88AA /* FirebaseDatabase in Frameworks */ = {isa = PBXBuildFile; productRef = 60DAAB292FCF4C4800AC88AA /* FirebaseDatabase */; };
+/* End PBXBuildFile section */
+
 /* Begin PBXContainerItemProxy section */
 		60DAAB042FCECCC100AC88AA /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
@@ -29,9 +37,30 @@
 		60DAAB0D2FCECCC100AC88AA /* strideUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = strideUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
+/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		60DAAB2F2FCF4D7100AC88AA /* Exceptions for "stride" folder in "strideTests" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				"GoogleService-Info.plist",
+			);
+			target = 60DAAB022FCECCC100AC88AA /* strideTests */;
+		};
+		60DAAB302FCF4D7100AC88AA /* Exceptions for "stride" folder in "strideUITests" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				"GoogleService-Info.plist",
+			);
+			target = 60DAAB0C2FCECCC100AC88AA /* strideUITests */;
+		};
+/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
+
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		60DAAAF82FCECCBF00AC88AA /* stride */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				60DAAB2F2FCF4D7100AC88AA /* Exceptions for "stride" folder in "strideTests" target */,
+				60DAAB302FCF4D7100AC88AA /* Exceptions for "stride" folder in "strideUITests" target */,
+			);
 			path = stride;
 			sourceTree = "<group>";
 		};
@@ -52,6 +81,11 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				60DAAB2A2FCF4C4800AC88AA /* FirebaseDatabase in Frameworks */,
+				60DAAB242FCF4C4800AC88AA /* FirebaseAppCheck in Frameworks */,
+				60DAAB262FCF4C4800AC88AA /* FirebaseAuth in Frameworks */,
+				60DAAB282FCF4C4800AC88AA /* FirebaseCore in Frameworks */,
+				60DAAB222FCF4C4800AC88AA /* FirebaseAnalytics in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -112,6 +146,11 @@
 			);
 			name = stride;
 			packageProductDependencies = (
+				60DAAB212FCF4C4800AC88AA /* FirebaseAnalytics */,
+				60DAAB232FCF4C4800AC88AA /* FirebaseAppCheck */,
+				60DAAB252FCF4C4800AC88AA /* FirebaseAuth */,
+				60DAAB272FCF4C4800AC88AA /* FirebaseCore */,
+				60DAAB292FCF4C4800AC88AA /* FirebaseDatabase */,
 			);
 			productName = stride;
 			productReference = 60DAAAF62FCECCBF00AC88AA /* stride.app */;
@@ -195,6 +234,9 @@
 			);
 			mainGroup = 60DAAAED2FCECCBF00AC88AA;
 			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				60DAAB202FCF4C4800AC88AA /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */,
+			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 60DAAAF72FCECCBF00AC88AA /* Products */;
 			projectDirPath = "";
@@ -390,6 +432,7 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = "";
 				ENABLE_APP_SANDBOX = YES;
 				ENABLE_PREVIEWS = YES;
 				ENABLE_USER_SELECTED_FILES = readonly;
@@ -432,6 +475,7 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = "";
 				ENABLE_APP_SANDBOX = YES;
 				ENABLE_PREVIEWS = YES;
 				ENABLE_USER_SELECTED_FILES = readonly;
@@ -605,6 +649,45 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		60DAAB202FCF4C4800AC88AA /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/firebase/firebase-ios-sdk";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 12.14.0;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		60DAAB212FCF4C4800AC88AA /* FirebaseAnalytics */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 60DAAB202FCF4C4800AC88AA /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebaseAnalytics;
+		};
+		60DAAB232FCF4C4800AC88AA /* FirebaseAppCheck */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 60DAAB202FCF4C4800AC88AA /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebaseAppCheck;
+		};
+		60DAAB252FCF4C4800AC88AA /* FirebaseAuth */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 60DAAB202FCF4C4800AC88AA /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebaseAuth;
+		};
+		60DAAB272FCF4C4800AC88AA /* FirebaseCore */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 60DAAB202FCF4C4800AC88AA /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebaseCore;
+		};
+		60DAAB292FCF4C4800AC88AA /* FirebaseDatabase */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 60DAAB202FCF4C4800AC88AA /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebaseDatabase;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = 60DAAAEE2FCECCBF00AC88AA /* Project object */;
 }

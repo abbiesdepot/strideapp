@@ -12,6 +12,8 @@
 		60DAAB262FCF4C4800AC88AA /* FirebaseAuth in Frameworks */ = {isa = PBXBuildFile; productRef = 60DAAB252FCF4C4800AC88AA /* FirebaseAuth */; };
 		60DAAB282FCF4C4800AC88AA /* FirebaseCore in Frameworks */ = {isa = PBXBuildFile; productRef = 60DAAB272FCF4C4800AC88AA /* FirebaseCore */; };
 		60DAAB2A2FCF4C4800AC88AA /* FirebaseDatabase in Frameworks */ = {isa = PBXBuildFile; productRef = 60DAAB292FCF4C4800AC88AA /* FirebaseDatabase */; };
+		60DAAB492FD05DFE00AC88AA /* FirebaseMessaging in Frameworks */ = {isa = PBXBuildFile; productRef = 60DAAB482FD05DFE00AC88AA /* FirebaseMessaging */; };
+		60DAAB542FD0647F00AC88AA /* FirebaseFirestore in Frameworks */ = {isa = PBXBuildFile; productRef = 60DAAB532FD0647F00AC88AA /* FirebaseFirestore */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -81,11 +83,13 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				60DAAB492FD05DFE00AC88AA /* FirebaseMessaging in Frameworks */,
 				60DAAB2A2FCF4C4800AC88AA /* FirebaseDatabase in Frameworks */,
 				60DAAB242FCF4C4800AC88AA /* FirebaseAppCheck in Frameworks */,
 				60DAAB262FCF4C4800AC88AA /* FirebaseAuth in Frameworks */,
 				60DAAB282FCF4C4800AC88AA /* FirebaseCore in Frameworks */,
 				60DAAB222FCF4C4800AC88AA /* FirebaseAnalytics in Frameworks */,
+				60DAAB542FD0647F00AC88AA /* FirebaseFirestore in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -112,6 +116,7 @@
 				60DAAAF82FCECCBF00AC88AA /* stride */,
 				60DAAB062FCECCC100AC88AA /* strideTests */,
 				60DAAB102FCECCC100AC88AA /* strideUITests */,
+				60DAAB472FD05DFE00AC88AA /* Frameworks */,
 				60DAAAF72FCECCBF00AC88AA /* Products */,
 			);
 			sourceTree = "<group>";
@@ -124,6 +129,13 @@
 				60DAAB0D2FCECCC100AC88AA /* strideUITests.xctest */,
 			);
 			name = Products;
+			sourceTree = "<group>";
+		};
+		60DAAB472FD05DFE00AC88AA /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Frameworks;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -151,6 +163,8 @@
 				60DAAB252FCF4C4800AC88AA /* FirebaseAuth */,
 				60DAAB272FCF4C4800AC88AA /* FirebaseCore */,
 				60DAAB292FCF4C4800AC88AA /* FirebaseDatabase */,
+				60DAAB482FD05DFE00AC88AA /* FirebaseMessaging */,
+				60DAAB532FD0647F00AC88AA /* FirebaseFirestore */,
 			);
 			productName = stride;
 			productReference = 60DAAAF62FCECCBF00AC88AA /* stride.app */;
@@ -686,6 +700,16 @@
 			isa = XCSwiftPackageProductDependency;
 			package = 60DAAB202FCF4C4800AC88AA /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
 			productName = FirebaseDatabase;
+		};
+		60DAAB482FD05DFE00AC88AA /* FirebaseMessaging */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 60DAAB202FCF4C4800AC88AA /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebaseMessaging;
+		};
+		60DAAB532FD0647F00AC88AA /* FirebaseFirestore */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 60DAAB202FCF4C4800AC88AA /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebaseFirestore;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};

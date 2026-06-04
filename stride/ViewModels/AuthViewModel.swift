@@ -1,71 +1,98 @@
-//
-//  AuthViewModel.swift
-//  stride
-//
-//  Created by abbie on 03/06/26.
-//
-
-import SwiftUI
+import Foundation
 import FirebaseAuth
 import FirebaseFirestore
 import Combine
 
-@MainActor
 class AuthViewModel: ObservableObject {
-    @Published var currentUser: StrideUser? = nil
-    @Published var isSessionChecking: Bool = true
-    @Published var initializationError: String? = nil
+    @Published var currentUser: StrideUser?
+    @Published var isAuthenticated: Bool = false
+    @Published var isLoading: Bool = false
+    @Published var errorMessage: String?
     
-    private let database = Firestore.firestore()
-    private var authenticationListener: AuthStateDidChangeListenerHandle?
+    private var db = Firestore.firestore()
+    private var cancellables = Set<AnyCancellable>()
     
     init() {
-        monitorAuthenticationState()
+        Auth.auth().addStateDidChangeListener { [weak self] _, user in
+            if let user = user {
+                self?.fetchUserRecord(uid: user.uid)
+            } else {
+                self?.isAuthenticated = false
+                self?.currentUser = nil
+            }
+        }
     }
     
-    func monitorAuthenticationState() {
-        self.isSessionChecking = true
-        authenticationListener = Auth.auth().addStateDidChangeListener { [weak self] _, user in
+    func register(fullName: String, email: String, phone: String, role: String, password: String) {
+        isLoading = true
+        errorMessage = nil
+        
+        Auth.auth().createUser(withEmail: email, password: password) { [weak self] authResult, error in
             guard let self = self else { return }
             
-            if let user = user {
-                Task {
-                    await self.synchronizeUserProfile(uid: user.uid)
+            if let error = error {
+                self.isLoading = false
+                self.errorMessage = error.localizedDescription
+                return
+            }
+            
+            guard let uid = authResult?.user.uid else { return }
+            
+            let user = StrideUser(id: uid, fullName: fullName, email: email, phoneNumber: phone, role: role, createdAt: Date())
+            
+            do {
+                try self.db.collection("users").document(uid).setData(from: user) { error in
+                    self.isLoading = false
+                    if let error = error {
+                        self.errorMessage = error.localizedDescription
+                    } else {
+                        self.currentUser = user
+                        self.isAuthenticated = true
+                    }
                 }
-            } else {
-                self.currentUser = nil
-                self.isSessionChecking = false
+            } catch {
+                self.isLoading = false
+                self.errorMessage = error.localizedDescription
             }
         }
     }
     
-    func synchronizeUserProfile(uid: String) async {
-        do {
-            let snapshot = try await database.collection("users").document(uid).getDocument()
-            if snapshot.exists {
-                self.currentUser = try snapshot.data(as: StrideUser.self)
-            } else {
-                self.currentUser = nil
+    func login(email: String, password: String) {
+        isLoading = true
+        errorMessage = nil
+        
+        Auth.auth().signIn(withEmail: email, password: password) { [weak self] authResult, error in
+            if let error = error {
+                self?.isLoading = false
+                self?.errorMessage = error.localizedDescription
+                return
             }
-        } catch {
-            self.initializationError = "Error parsing profile data: \(error.localizedDescription)"
-            self.currentUser = nil
+            // StateDidChangeListener bakal fetch the user record
         }
-        self.isSessionChecking = false
     }
     
-    func signOutSession() {
+    func logout() {
         do {
             try Auth.auth().signOut()
-            self.currentUser = nil
         } catch {
-            print("Failed to gracefully teardown auth context session: \(error.localizedDescription)")
+            self.errorMessage = error.localizedDescription
         }
     }
     
-    deinit {
-        if let listener = authenticationListener {
-            Auth.auth().removeStateDidChangeListener(listener)
+    private func fetchUserRecord(uid: String) {
+        isLoading = true
+        db.collection("users").document(uid).getDocument { [weak self] document, error in
+            self?.isLoading = false
+            if let document = document, document.exists {
+                do {
+                    self?.currentUser = try document.data(as: StrideUser.self)
+                    self?.isAuthenticated = true
+                } catch {
+                    self?.errorMessage = "Error decoding user: \(error.localizedDescription)"
+                }
+            } else {
+                self?.errorMessage = "User record not found."
+            }
         }
     }
 }

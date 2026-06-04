@@ -29,3 +29,7 @@ struct CaregiverMainView: View {
         }
     }
 }
+
+#Preview {
+    CaregiverMainView()
+}

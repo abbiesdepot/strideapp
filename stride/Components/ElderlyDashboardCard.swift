@@ -30,7 +30,7 @@ struct ElderlyDashboardCard: View {
                 
                 Spacer()
                 
-                LiveStatusBadge(status: profile.liveStatus)
+//                LiveStatusBadge(status: profile.liveStatus)
             }
             
             Divider()

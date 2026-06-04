@@ -86,3 +86,41 @@ struct VitalSign: Codable, Identifiable {
     var spO2: Double
     var recordedAt: Date
 }
+
+struct SleepLog: Codable, Identifiable {
+    @DocumentID var id: String?
+
+    var elderlyID: String
+
+    var awakeMinutes: Int
+    var remMinutes: Int
+    var coreMinutes: Int
+    var deepMinutes: Int
+
+    var recordedAt: Date
+}
+
+struct WellnessData: Codable, Identifiable {
+    @DocumentID var id: String?
+
+    var elderlyID: String
+
+    var stressLevel: Int
+    var moodLevel: Int
+
+    var recordedAt: Date
+}
+
+struct TaskItem: Codable, Identifiable {
+    @DocumentID var id: String?
+
+    var elderlyID: String
+
+    var title: String
+    var startTime: String
+    var endTime: String
+
+    var isCompleted: Bool
+
+    var createdAt: Date?
+}

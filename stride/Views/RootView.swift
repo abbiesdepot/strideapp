@@ -31,22 +31,11 @@ struct RootView: View {
                 } else if user.role == "family_member" {
                     FamilyMainView()
                 } else {
-                    OnboardingRoleSelectView()
+                    OnboardingRoleSelectiView()
                 }
             } else {
-                OnboardingRoleSelectView()
+                OnboardingRoleSelectiView()
             }
-        }
-    }
-}
-
-struct CaregiverMainView: View {
-    @EnvironmentObject var authContext: AuthViewModel
-    var body: some View {
-        VStack {
-            Text("Caregiver Workspace Active")
-                .font(.system(size: 17, weight: .bold))
-            Button("Log Out") { authContext.signOutSession() }
         }
     }
 }

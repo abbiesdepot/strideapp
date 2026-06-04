@@ -21,6 +21,14 @@ struct CaregiverDashboardView: View {
                                 .foregroundColor(.stridePrimary)
                         }
                         Spacer()
+                        
+                        Button(action: {
+                            authViewModel.logout()
+                        }) {
+                            Image(systemName: "rectangle.portrait.and.arrow.right")
+                                .foregroundColor(.strideRed)
+                                .font(.system(size: 20))
+                        }
                     }
                     .padding(.horizontal, 24)
                     .padding(.top, 16)

@@ -2,34 +2,78 @@
 //  strideTests.swift
 //  strideTests
 //
-//  Created by abbie on 02/06/26.
-//
 
 import XCTest
+@testable import stride
+import FirebaseCore
 
 final class strideTests: XCTestCase {
-
-    override func setUpWithError() throws {
-        // Put setup code here. This method is called before the invocation of each test method in the class.
-    }
-
-    override func tearDownWithError() throws {
-        // Put teardown code here. This method is called after the invocation of each test method in the class.
-    }
-
-    func testExample() throws {
-        // This is an example of a functional test case.
-        // Use XCTAssert and related functions to verify your tests produce the correct results.
-        // Any test you write for XCTest can be annotated as throws and async.
-        // Mark your test throws to produce an unexpected failure when your test encounters an uncaught error.
-        // Mark your test async to allow awaiting for asynchronous code to complete. Check the results with assertions afterwards.
-    }
-
-    func testPerformanceExample() throws {
-        // This is an example of a performance test case.
-        measure {
-            // Put the code you want to measure the time of here.
+    
+    // 1. Change this to an async setup hook!
+    override func setUp() async throws {
+        try await super.setUp()
+        
+        // Only configure if an instance doesn't exist yet
+        if FirebaseApp.app() == nil {
+            let options = FirebaseOptions(googleAppID: "1:1234567890:ios:1234567890", gcmSenderID: "1234567890")
+            options.apiKey = "MockAPIKeyForTesting"
+            options.projectID = "stride-mock-db"
+            
+            FirebaseApp.configure(options: options)
+            print("Stride Test Runner: Firebase configured.")
         }
+        
+        // 2. The Golden Solution: Force the CPU to wait 0.1 seconds
+        // This gives Firebase time to fully sit in memory before tests run!
+        try await Task.sleep(nanoseconds: 100_000_000) // 0.1 seconds
     }
-
+    
+    override func tearDown() {
+        super.tearDown()
+    }
+    
+    func testStrideUserInitialization() throws {
+        let user = StrideMockData.sampleCaregiver
+        
+        XCTAssertEqual(user.id, "user_test_01")
+        XCTAssertEqual(user.fullName, "Abbie Test")
+        XCTAssertEqual(user.role, "caregiver")
+    }
+    
+    func testMedicationInitialization() throws {
+        let med = StrideMockData.sampleMedication
+        
+        XCTAssertEqual(med.name, "Paracetamol")
+        XCTAssertEqual(med.dosage, "500mg")
+        XCTAssertTrue(med.isEnabled)
+    }
+    
+//    @MainActor
+//    func testAuthViewModelInitialState() throws {
+//        let viewModel = AuthViewModel()
+//        
+//        XCTAssertFalse(viewModel.isAuthenticated)
+//        XCTAssertFalse(viewModel.isLoading)
+//        XCTAssertNil(viewModel.currentUser)
+//        XCTAssertNil(viewModel.errorMessage)
+//    }
+//    
+//    @MainActor
+//    func testFamilyDashboardInitialState() throws {
+//        let viewModel = FamilyDashboardViewModel()
+//        
+//        XCTAssertTrue(viewModel.elderlyProfiles.isEmpty)
+//        XCTAssertFalse(viewModel.isLoading)
+//        XCTAssertNil(viewModel.errorMessage)
+//    }
+    
+    @MainActor
+    func testCaregiverDashboardInitialState() throws {
+        let viewModel = CaregiverDashboardViewModel()
+        
+        XCTAssertNil(viewModel.elderlyProfile)
+        XCTAssertNil(viewModel.family)
+        XCTAssertFalse(viewModel.isLoading)
+    }
 }
+

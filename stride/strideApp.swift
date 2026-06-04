@@ -20,6 +20,8 @@ struct strideApp: App {
             FirebaseApp.configure()
             print("Stride Backend: Firebase successfully initialized.")
         }
+        // Initialize WatchSessionManager to start listening to Apple Watch
+        _ = WatchSessionManager.shared
     }
     
     var body: some Scene {

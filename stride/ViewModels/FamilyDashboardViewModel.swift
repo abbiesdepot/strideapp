@@ -48,6 +48,10 @@ class FamilyDashboardViewModel: ObservableObject {
                         
                         guard let documents = snapshot?.documents else { return }
                         self.elderlyProfiles = documents.compactMap { try? $0.data(as: ElderlyProfile.self) }
+                        
+                        if let firstProfile = self.elderlyProfiles.first, let id = firstProfile.id {
+                            WatchSessionManager.shared.startMonitoringMedications(elderlyID: id)
+                        }
                     }
             }
     }

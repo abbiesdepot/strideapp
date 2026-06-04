@@ -1,7 +1,8 @@
 import SwiftUI
 
 struct LiveStatusBadge: View {
-    let status: String
+    let status: String  // "green", "yellow", "red"
+    let reason: String
     
     var color: Color {
         switch status.lowercased() {
@@ -22,27 +23,36 @@ struct LiveStatusBadge: View {
     }
     
     var body: some View {
-        HStack(spacing: 6) {
-            Circle()
-                .fill(color)
-                .frame(width: 8, height: 8)
-                // Pulse animation can be added here if needed
+        VStack(alignment: .leading, spacing: 4) {
+            HStack(spacing: 6) {
+                Circle()
+                    .fill(color)
+                    .frame(width: 8, height: 8)
                 
-            Text(text)
-                .font(.system(size: 14, weight: .semibold, design: .default))
-                .foregroundColor(color)
+                Text(text)
+                    .font(.system(size: 14, weight: .semibold))
+                    .foregroundColor(color)
+            }
+            .padding(.horizontal, 10)
+            .padding(.vertical, 4)
+            .background(color.opacity(0.15))
+            .cornerRadius(12)
+            
+            if !reason.isEmpty {
+                Text(reason)
+                    .font(.system(size: 12, weight: .medium))
+                    .foregroundColor(.strideTextSecondary)
+                    .padding(.leading, 2)
+            }
         }
-        .padding(.horizontal, 10)
-        .padding(.vertical, 4)
-        .background(color.opacity(0.15))
-        .cornerRadius(12)
     }
 }
 
 #Preview {
     VStack(spacing: 16) {
-        LiveStatusBadge(status: "green")
-        LiveStatusBadge(status: "yellow")
-        LiveStatusBadge(status: "red")
+        LiveStatusBadge(status: "green", reason: "Good health")
+        LiveStatusBadge(status: "yellow", reason: "Missed 1 medication")
+        LiveStatusBadge(status: "red", reason: "Fall detected!")
     }
 }
+

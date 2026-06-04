@@ -5,117 +5,123 @@ struct JoinCareCircleView: View {
     @StateObject private var familyVM = FamilyDashboardViewModel()
     
     @State private var inviteCode = ""
-    @State private var isSuccess = false
+    @State private var inlineError: String? = nil
     
     var isFormValid: Bool {
-        inviteCode.count == 6
+        inviteCode.trimmingCharacters(in: .whitespacesAndNewlines).count == 6
     }
     
     var body: some View {
         VStack(spacing: 32) {
             Spacer()
             
-            // Illustration
-            Circle()
-                .fill(Color.strideSecondary.opacity(0.15))
-                .frame(width: 120, height: 120)
-                .overlay(
-                    Image(systemName: "person.badge.plus")
-                        .foregroundColor(.strideSecondary)
-                        .font(.system(size: 50))
-                )
+            // Stride Logo at top
+            HStack(spacing: 8) {
+                Image(systemName: "waveform.path.ecg")
+                    .font(.system(size: 36, weight: .bold))
+                    .foregroundColor(.strideSecondary)
+                Text("STRIDE")
+                    .font(.system(size: 32, weight: .black))
+                    .foregroundColor(.stridePrimary)
+            }
+            .padding(.bottom, 20)
             
             VStack(spacing: 8) {
-                Text("Connect to your family")
-                    .font(.system(size: 24, weight: .bold, design: .default))
+                Text("Join a Care Circle")
+                    .font(.system(size: 26, weight: .bold))
                     .foregroundColor(.stridePrimary)
                 
-                Text("Join a family to monitor your loved one's health and stay updated together.")
-                    .font(.system(size: 16, weight: .regular, design: .default))
+                Text("Enter the invite code from your caregiver to get started")
+                    .font(.system(size: 15))
                     .foregroundColor(.strideTextSecondary)
                     .multilineTextAlignment(.center)
-                    .padding(.horizontal, 32)
+                    .padding(.horizontal, 40)
             }
             
-            // Invite Code Box
-            VStack(alignment: .leading, spacing: 8) {
-                Text("INVITE CODE")
-                    .font(.system(size: 12, weight: .bold))
-                    .foregroundColor(.strideTextSecondary)
-                
-                TextField("X X X X X X", text: $inviteCode)
-                    .font(.system(size: 32, weight: .bold, design: .monospaced))
+            // Large styled text input: 6 characters, auto uppercase, letter spacing wide, centered
+            VStack(spacing: 12) {
+                TextField("------", text: $inviteCode)
+                    .font(.system(size: 36, weight: .bold, design: .monospaced))
+                    .tracking(10)
                     .multilineTextAlignment(.center)
                     .textInputAutocapitalization(.characters)
-                    .disableAutocorrection(true)
-                    .padding()
+                    .autocorrectionDisabled(true)
+                    .padding(.vertical, 16)
+                    .padding(.horizontal, 24)
                     .background(Color.strideBackground)
                     .cornerRadius(StrideTheme.cornerRadiusButton)
                     .overlay(
                         RoundedRectangle(cornerRadius: StrideTheme.cornerRadiusButton)
-                            .stroke(Color.strideNeutral.opacity(0.2), lineWidth: 1)
+                            .stroke(inlineError != nil ? Color.strideRed : Color.strideNeutral.opacity(0.3), lineWidth: 1.5)
                     )
                     .onChange(of: inviteCode) { newValue in
-                        if newValue.count > 6 {
-                            inviteCode = String(newValue.prefix(6))
+                        // Auto uppercase and restrict to 6 characters
+                        let filtered = newValue.uppercased().filter { "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789".contains($0) }
+                        if filtered.count > 6 {
+                            inviteCode = String(filtered.prefix(6))
+                        } else {
+                            inviteCode = filtered
                         }
+                        inlineError = nil
                     }
                 
-                Text("Ask your caregiver for the invite code.")
-                    .font(.system(size: 14))
-                    .foregroundColor(.strideTextSecondary)
-                    .frame(maxWidth: .infinity, alignment: .center)
+                if let error = inlineError {
+                    Text(error)
+                        .foregroundColor(.strideRed)
+                        .font(.system(size: 14, weight: .semibold))
+                        .multilineTextAlignment(.center)
+                        .padding(.horizontal, 32)
+                        .transition(.opacity)
+                }
             }
-            .padding(.horizontal, 24)
+            .padding(.horizontal, 32)
             
-            if let error = familyVM.errorMessage {
-                Text(error)
-                    .foregroundColor(.strideRed)
-                    .font(.system(size: 14))
-                    .multilineTextAlignment(.center)
-            }
-            
+            // Teal Join Family Button
             Button(action: {
-                if let uid = authViewModel.currentUser?.id {
-                    familyVM.joinCareCircle(inviteCode: inviteCode, userID: uid) { success, error in
-                        if success {
-                            isSuccess = true
-                        }
+                guard let uid = authViewModel.currentUser?.id else { return }
+                inlineError = nil
+                
+                familyVM.joinCareCircle(inviteCode: inviteCode, userID: uid) { success, error in
+                    if success {
+                        // Mark in environment that we successfully joined
+                        authViewModel.isInCareCircle = true
+                    } else {
+                        inlineError = "Invalid code. Ask your caregiver to check the invite code."
                     }
                 }
             }) {
                 HStack {
                     if familyVM.isLoading {
-                        ProgressView()
-                            .progressViewStyle(CircularProgressViewStyle(tint: .white))
+                        ProgressView().tint(.white)
                     } else {
-                        Image(systemName: "link")
-                        Text("Join family")
+                        Text("Join Family")
                     }
                 }
                 .font(.system(size: 16, weight: .bold))
+                .foregroundColor(.white)
                 .frame(maxWidth: .infinity)
                 .padding()
-                .background(isFormValid ? Color.stridePrimary : Color.strideNeutral.opacity(0.5))
-                .foregroundColor(.white)
+                .background(isFormValid ? Color.strideSecondary : Color.strideNeutral.opacity(0.4))
                 .cornerRadius(StrideTheme.cornerRadiusButton)
             }
             .disabled(!isFormValid || familyVM.isLoading)
-            .padding(.horizontal, 24)
+            .padding(.horizontal, 32)
+            
+            Button("Log Out") {
+                authViewModel.logout()
+            }
+            .font(.system(size: 15, weight: .semibold))
+            .foregroundColor(.strideTextSecondary)
+            .padding(.top, 8)
             
             Spacer()
         }
         .background(Color.strideCardWhite.ignoresSafeArea())
-        .navigationDestination(isPresented: $isSuccess) {
-            FamilyMainView()
-                .navigationBarBackButtonHidden(true)
-        }
+        .animation(.default, value: inlineError)
     }
 }
 
 #Preview {
-    NavigationStack {
-        JoinCareCircleView()
-            .environmentObject(AuthViewModel())
-    }
+    JoinCareCircleView()
+        .environmentObject(AuthViewModel())
 }

@@ -1,7 +1,12 @@
 import SwiftUI
+import FirebaseFirestore
 
 struct DailySummaryView: View {
     let profile: ElderlyProfile
+    
+    @StateObject private var medVM = MedicationViewModel()
+    @State private var todayLogs: [MedicationLog] = []
+    @State private var logsListener: ListenerRegistration?
     
     var body: some View {
         ScrollView {
@@ -17,7 +22,7 @@ struct DailySummaryView: View {
                         .font(.system(size: 24, weight: .bold))
                         .foregroundColor(.stridePrimary)
                     
-                    LiveStatusBadge(status: profile.liveStatus)
+                    LiveStatusBadge(status: profile.liveStatus, reason: profile.liveStatusReason)
                 }
                 .padding(.top, 20)
                 
@@ -33,8 +38,63 @@ struct DailySummaryView: View {
                         .font(.system(size: 18, weight: .bold))
                         .foregroundColor(.stridePrimary)
                     
-                    Text("Medication schedule will appear here.")
-                        .foregroundColor(.strideTextSecondary)
+                    if medVM.medications.isEmpty {
+                        Text("No medications scheduled.")
+                            .font(.system(size: 14))
+                            .foregroundColor(.strideTextSecondary)
+                    } else {
+                        ForEach(medVM.medications) { medication in
+                            let log = todayLogs.first(where: { $0.medicationID == medication.id })
+                            HStack {
+                                VStack(alignment: .leading, spacing: 4) {
+                                    Text(medication.name)
+                                        .font(.system(size: 15, weight: .bold))
+                                        .foregroundColor(.strideTextPrimary)
+                                    Text(medication.dosage)
+                                        .font(.system(size: 13))
+                                        .foregroundColor(.strideTextSecondary)
+                                }
+                                Spacer()
+                                VStack(alignment: .trailing, spacing: 4) {
+                                    Text(medication.scheduleTime)
+                                        .font(.system(size: 13, weight: .semibold))
+                                        .foregroundColor(.strideTextSecondary)
+                                    
+                                    if let log = log {
+                                        if log.status.lowercased() == "taken" {
+                                            Text("taken ✓")
+                                                .font(.system(size: 11, weight: .bold))
+                                                .foregroundColor(.strideGreen)
+                                                .padding(.horizontal, 6)
+                                                .padding(.vertical, 2)
+                                                .background(Color.strideGreen.opacity(0.15))
+                                                .cornerRadius(6)
+                                        } else {
+                                            Text("missed ✗")
+                                                .font(.system(size: 11, weight: .bold))
+                                                .foregroundColor(.strideRed)
+                                                .padding(.horizontal, 6)
+                                                .padding(.vertical, 2)
+                                                .background(Color.strideRed.opacity(0.15))
+                                                .cornerRadius(6)
+                                        }
+                                    } else {
+                                        Text("pending")
+                                            .font(.system(size: 11, weight: .bold))
+                                            .foregroundColor(.strideNeutral)
+                                            .padding(.horizontal, 6)
+                                            .padding(.vertical, 2)
+                                            .background(Color.strideNeutral.opacity(0.15))
+                                            .cornerRadius(6)
+                                    }
+                                }
+                            }
+                            .padding()
+                            .background(Color.strideCardWhite)
+                            .cornerRadius(12)
+                            .shadow(color: StrideTheme.shadowColor, radius: 4, x: 0, y: 2)
+                        }
+                    }
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .padding(.horizontal, 24)
@@ -45,6 +105,26 @@ struct DailySummaryView: View {
         .background(Color.strideBackground.ignoresSafeArea())
         .navigationTitle(profile.fullName)
         .navigationBarTitleDisplayMode(.inline)
+        .onAppear {
+            medVM.fetchMedications(elderlyID: profile.id ?? "")
+            listenToTodayLogs(elderlyID: profile.id ?? "")
+        }
+        .onDisappear {
+            logsListener?.remove()
+        }
+    }
+    
+    func listenToTodayLogs(elderlyID: String) {
+        let db = Firestore.firestore()
+        let startOfDay = Calendar.current.startOfDay(for: Date())
+        logsListener?.remove()
+        logsListener = db.collection("medicationLogs")
+            .whereField("elderlyID", isEqualTo: elderlyID)
+            .whereField("scheduledTime", isGreaterThanOrEqualTo: startOfDay)
+            .addSnapshotListener { snapshot, error in
+                guard let documents = snapshot?.documents else { return }
+                self.todayLogs = documents.compactMap { try? $0.data(as: MedicationLog.self) }
+            }
     }
 }
 

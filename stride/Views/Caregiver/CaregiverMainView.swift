@@ -2,6 +2,8 @@ import SwiftUI
 
 struct CaregiverMainView: View {
     @EnvironmentObject var authViewModel: AuthViewModel
+    @StateObject private var dashboardVM = CaregiverDashboardViewModel()
+    @StateObject private var alertVM = AlertViewModel()
     
     var body: some View {
         TabView {
@@ -10,26 +12,28 @@ struct CaregiverMainView: View {
                     Label("Dashboard", systemImage: "square.grid.2x2.fill")
                 }
             
-            MedicationManagerView()
-                .tabItem {
-                    Label("Medications", systemImage: "pills.fill")
-                }
-            
-            PeopleManagementView()
-                .tabItem {
-                    Label("Care Circle", systemImage: "person.2.fill")
-                }
-            
             AlertCenterView()
                 .tabItem {
                     Label("Alerts", systemImage: "bell.fill")
                 }
+                .badge(alertVM.unreadCount > 0 ? alertVM.unreadCount : 0)
             
-            WeeklyHealthTrendView()
+            CaregiverProfileView()
                 .tabItem {
-                    Label("Trends", systemImage: "chart.line.uptrend.xyaxis")
+                    Label("Profile", systemImage: "person.circle.fill")
                 }
         }
         .tint(.stridePrimary)
+        .onAppear {
+            if let uid = authViewModel.currentUser?.id {
+                dashboardVM.fetchDashboardData(caregiverID: uid)
+            }
+        }
+        .onChange(of: dashboardVM.family?.id) { familyID in
+            if let familyID = familyID {
+                alertVM.fetchAlerts(familyID: familyID)
+            }
+        }
     }
 }
+

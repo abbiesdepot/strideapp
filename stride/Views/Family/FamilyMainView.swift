@@ -2,6 +2,7 @@ import SwiftUI
 
 struct FamilyMainView: View {
     @EnvironmentObject var authViewModel: AuthViewModel
+    @StateObject private var alertVM = FamilyAlertViewModel()
     
     var body: some View {
         TabView {
@@ -10,34 +11,26 @@ struct FamilyMainView: View {
                     Label("Home", systemImage: "house.fill")
                 }
             
-            // Reusing Caregiver AlertCenterView since logic is basically the same,
-            // we just need to disable the resolve button for family members.
-            // But since the alertVM logic needs the familyID, we can adapt it or create a specific one.
-            // For now, let's just show an empty placeholder or basic view.
-            Text("Alerts")
+            FamilyAlertCenterView()
                 .tabItem {
                     Label("Alerts", systemImage: "bell.fill")
                 }
+                .badge(alertVM.unresolvedCount > 0 ? alertVM.unresolvedCount : 0)
             
-            VStack {
-                Text(authViewModel.currentUser?.fullName ?? "Family Member")
-                    .font(.title)
-                Text(authViewModel.currentUser?.email ?? "")
-                    .foregroundColor(.strideTextSecondary)
-                
-                Button("Log Out") {
-                    authViewModel.logout()
+            FamilyProfileView()
+                .tabItem {
+                    Label("Profile", systemImage: "person.circle.fill")
                 }
-                .foregroundColor(.strideRed)
-                .padding(.top, 20)
-            }
-            .tabItem {
-                Label("Profile", systemImage: "person.circle.fill")
-            }
         }
         .tint(.stridePrimary)
+        .onAppear {
+            if let uid = authViewModel.currentUser?.id {
+                alertVM.startAlertsListener(userID: uid)
+            }
+        }
     }
 }
+
 
 #Preview {
     FamilyMainView()

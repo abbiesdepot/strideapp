@@ -59,13 +59,28 @@ struct AlertCenterView: View {
                         Spacer()
                         VStack(spacing: 16) {
                             Image(systemName: "checkmark.seal.fill")
-                                .font(.system(size: 60))
+                                .font(.system(size: 80))
                                 .foregroundColor(.strideGreen)
-                            Text("No alerts")
+                            Text("No Alerts")
                                 .font(.system(size: 20, weight: .bold))
                                 .foregroundColor(.stridePrimary)
                             Text("Everything looks good.")
                                 .foregroundColor(.strideTextSecondary)
+                            
+                            Button(action: {
+                                if let uid = authViewModel.currentUser?.id {
+                                    dashboardVM.fetchDashboardData(caregiverID: uid)
+                                }
+                            }) {
+                                Text("Refresh Alerts")
+                                    .font(.system(size: 14, weight: .bold))
+                                    .foregroundColor(.white)
+                                    .padding(.horizontal, 24)
+                                    .padding(.vertical, 12)
+                                    .background(Color.stridePrimary)
+                                    .cornerRadius(StrideTheme.cornerRadiusButton)
+                            }
+                            .padding(.top, 8)
                         }
                         Spacer()
                     } else {

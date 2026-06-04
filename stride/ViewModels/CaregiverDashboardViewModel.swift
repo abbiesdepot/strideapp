@@ -9,18 +9,24 @@ class CaregiverDashboardViewModel: ObservableObject {
     @Published var isLoading = false
     @Published var errorMessage: String?
     
+    // Scoped live updates
+    @Published var activeMedications: [Medication] = []
+    @Published var todayMedicationLogs: [MedicationLog] = []
+    @Published var latestVitalSign: VitalSign?
+    
     private var db = Firestore.firestore()
-    private var listenerRegistration: ListenerRegistration?
+    private var profileListener: ListenerRegistration?
+    private var medicationsListener: ListenerRegistration?
+    private var logsListener: ListenerRegistration?
+    private var vitalsListener: ListenerRegistration?
     
     func fetchDashboardData(caregiverID: String) {
         isLoading = true
-        // Fetch Family document where caregiverID matches
         db.collection("family")
             .whereField("caregiverID", isEqualTo: caregiverID)
             .getDocuments { [weak self] snapshot, error in
                 guard let self = self else { return }
                 
-                //ini masi gtau in progress fixing nya
                 if let error = error {
                     self.isLoading = false
                     self.errorMessage = error.localizedDescription
@@ -29,14 +35,13 @@ class CaregiverDashboardViewModel: ObservableObject {
                 
                 guard let document = snapshot?.documents.first else {
                     self.isLoading = false
-                    // no family set up yet
                     return
                 }
                 
                 do {
                     self.family = try document.data(as: Family.self)
                     if let elderlyID = self.family?.elderlyID {
-                        self.listenToElderlyProfile(elderlyID: elderlyID)
+                        self.listenToElderlyData(elderlyID: elderlyID)
                     }
                 } catch {
                     self.isLoading = false
@@ -45,10 +50,19 @@ class CaregiverDashboardViewModel: ObservableObject {
             }
     }
     
-    private func listenToElderlyProfile(elderlyID: String) {
-        listenerRegistration?.remove()
+    private func listenToElderlyData(elderlyID: String) {
+        listenToElderlyProfile(elderlyID: elderlyID)
+        listenToMedications(elderlyID: elderlyID)
+        listenToTodayLogs(elderlyID: elderlyID)
+        listenToLatestVitals(elderlyID: elderlyID)
         
-        listenerRegistration = db.collection("elderlyProfiles").document(elderlyID)
+        // Watch sync trigger
+        WatchSessionManager.shared.startMonitoringMedications(elderlyID: elderlyID)
+    }
+    
+    private func listenToElderlyProfile(elderlyID: String) {
+        profileListener?.remove()
+        profileListener = db.collection("elderlyProfiles").document(elderlyID)
             .addSnapshotListener { [weak self] documentSnapshot, error in
                 guard let self = self else { return }
                 self.isLoading = false
@@ -71,6 +85,66 @@ class CaregiverDashboardViewModel: ObservableObject {
             }
     }
     
+    private func listenToMedications(elderlyID: String) {
+        medicationsListener?.remove()
+        medicationsListener = db.collection("medications")
+            .whereField("elderlyID", isEqualTo: elderlyID)
+            .whereField("isEnabled", isEqualTo: true)
+            .addSnapshotListener { [weak self] snapshot, error in
+                guard let self = self, let documents = snapshot?.documents else { return }
+                self.activeMedications = documents.compactMap { try? $0.data(as: Medication.self) }
+            }
+    }
+    
+    private func listenToTodayLogs(elderlyID: String) {
+        let startOfDay = Calendar.current.startOfDay(for: Date())
+        logsListener?.remove()
+        logsListener = db.collection("medicationLogs")
+            .whereField("elderlyID", isEqualTo: elderlyID)
+            .whereField("scheduledTime", isGreaterThanOrEqualTo: startOfDay)
+            .addSnapshotListener { [weak self] snapshot, error in
+                guard let self = self, let documents = snapshot?.documents else { return }
+                self.todayMedicationLogs = documents.compactMap { try? $0.data(as: MedicationLog.self) }
+            }
+    }
+    
+    private func listenToLatestVitals(elderlyID: String) {
+        vitalsListener?.remove()
+        vitalsListener = db.collection("vitalSigns")
+            .whereField("elderlyID", isEqualTo: elderlyID)
+            .order(by: "recordedAt", descending: true)
+            .limit(to: 1)
+            .addSnapshotListener { [weak self] snapshot, error in
+                guard let self = self, let documents = snapshot?.documents else { return }
+                self.latestVitalSign = documents.first.flatMap { try? $0.data(as: VitalSign.self) }
+            }
+    }
+    
+    var lastActiveText: String {
+        guard let lastTime = latestVitalSign?.recordedAt else {
+            return "No activity recorded"
+        }
+        let diff = Int(Date().timeIntervalSince(lastTime))
+        if diff < 60 {
+            return "Last active just now"
+        } else if diff < 3600 {
+            return "Last active \(diff / 60) min ago"
+        } else {
+            let hours = diff / 3600
+            if hours < 24 {
+                return "Last active \(hours) hr ago"
+            } else {
+                return "Last active \(hours / 24) days ago"
+            }
+        }
+    }
+    
+    var medicationComplianceText: String {
+        let takenCount = todayMedicationLogs.filter { $0.status == "taken" }.count
+        let totalCount = max(todayMedicationLogs.count, activeMedications.count)
+        return "\(takenCount) of \(totalCount) medications taken"
+    }
+    
     func createElderlyProfile(caregiverID: String, fullName: String, age: Int, medicalNotes: String, completion: @escaping (Bool) -> Void) {
         isLoading = true
         
@@ -79,7 +153,7 @@ class CaregiverDashboardViewModel: ObservableObject {
             age: age,
             photoURL: nil,
             medicalNotes: medicalNotes,
-            familyID: nil, // bakal be set after Family creation
+            familyID: nil,
             stepCount: 0,
             distanceKM: 0.0,
             liveStatus: "green",
@@ -113,7 +187,6 @@ class CaregiverDashboardViewModel: ObservableObject {
                     self.errorMessage = error.localizedDescription
                     completion(false)
                 } else {
-                    // update elderly profile w familyID
                     self.db.collection("elderlyProfiles").document(elderlyID).updateData([
                         "familyID": newFamily.id ?? ""
                     ])
@@ -128,6 +201,9 @@ class CaregiverDashboardViewModel: ObservableObject {
     }
     
     deinit {
-        listenerRegistration?.remove()
+        profileListener?.remove()
+        medicationsListener?.remove()
+        logsListener?.remove()
+        vitalsListener?.remove()
     }
 }

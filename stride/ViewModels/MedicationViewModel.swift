@@ -50,6 +50,19 @@ class MedicationViewModel: ObservableObject {
         }
     }
     
+    func updateMedication(medicationID: String, name: String, dosage: String, frequency: String, scheduleTime: String) {
+        db.collection("medications").document(medicationID).updateData([
+            "name": name,
+            "dosage": dosage,
+            "frequency": frequency,
+            "scheduleTime": scheduleTime
+        ]) { [weak self] error in
+            if let error = error {
+                self?.errorMessage = error.localizedDescription
+            }
+        }
+    }
+    
     func toggleMedicationStatus(medication: Medication) {
         guard let id = medication.id else { return }
         db.collection("medications").document(id).updateData([

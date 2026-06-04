@@ -21,6 +21,9 @@ struct ElderlyProfile: Codable, Identifiable {
     var distanceKM: Double
     var liveStatus: String // "green", "yellow", "red"
     var liveStatusReason: String
+    var weight: Double?
+    var height: Double?
+    var bloodType: String?
     var createdAt: Date?
 }
 
@@ -77,6 +80,7 @@ struct Alert: Codable, Identifiable {
     var message: String
     var isResolved: Bool
     var triggeredAt: Date
+    var seenBy: [String]? // For family members to mark as seen
 }
 
 struct VitalSign: Codable, Identifiable {

@@ -27,7 +27,7 @@ struct FamilyDashboardView: View {
                         VStack(spacing: 24) {
                             HStack {
                                 VStack(alignment: .leading, spacing: 4) {
-                                    Text("Good day,")
+                                    Text(greetingMessage)
                                         .font(.system(size: 16, weight: .regular))
                                         .foregroundColor(.strideTextSecondary)
                                     
@@ -67,6 +67,17 @@ struct FamilyDashboardView: View {
                     viewModel.fetchElderlyProfiles(userID: uid)
                 }
             }
+        }
+    }
+    
+    private var greetingMessage: String {
+        let hour = Calendar.current.component(.hour, from: Date())
+        if hour < 12 {
+            return "Good morning,"
+        } else if hour < 17 {
+            return "Good afternoon,"
+        } else {
+            return "Good evening,"
         }
     }
 }

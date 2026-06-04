@@ -9,19 +9,21 @@ import SwiftUI
 
 extension Color {
     // brand palette
-    static let strideTeal = Color(hex: "2D6A7F")
-    static let strideTealLight = Color(hex: "E8F4F8")
-    static let strideBackground = Color(hex: "F2F4F7")
-    static let strideCardWhite = Color(hex: "FFFFFF")
+    static let stridePrimary = Color(hex: "#2E5077")
+    static let strideSecondary = Color(hex: "#4DA1A9")
+    static let strideTertiary = Color(hex: "#79D7BE")
+    static let strideNeutral = Color(hex: "#76777A")
+    static let strideBackground = Color(hex: "#F2F4F7")
+    static let strideCardWhite = Color.white
     
-    // status indicatornya
-    static let strideGreen = Color(hex: "2ECC71")
-    static let strideYellow = Color(hex: "F5A623")
-    static let strideRed = Color(hex: "E8483A")
+    // status indicatorsnya
+    static let strideGreen = Color(hex: "#4CAF50")
+    static let strideYellow = Color(hex: "#FFC107")
+    static let strideRed = Color(hex: "#F44336")
     
     // typography
-    static let strideTextPrimary = Color(hex: "1A2B3C")
-    static let strideTextSecondary = Color(hex: "6B7C8D")
+    static let strideTextPrimary = Color(hex: "#2E5077")
+    static let strideTextSecondary = Color(hex: "#76777A")
     
     // hex code utility
     init(hex: String) {

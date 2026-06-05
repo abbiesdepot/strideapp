@@ -7,6 +7,8 @@ class FamilyDashboardViewModel: ObservableObject {
     @Published var elderlyProfiles: [ElderlyProfile] = []
     @Published var isLoading = false
     @Published var errorMessage: String?
+    @Published var latestActivity: ActivityLog?
+    @Published var latestVitalSign: VitalSign?
     
     private var db = Firestore.firestore()
     

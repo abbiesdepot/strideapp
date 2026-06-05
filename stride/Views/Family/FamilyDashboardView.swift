@@ -46,7 +46,10 @@ struct FamilyDashboardView: View {
                                 .padding(.horizontal, 24)
                             
                             ForEach(viewModel.elderlyProfiles) { profile in
-                                ElderlyDashboardCard(profile: profile)
+                                ElderlyDashboardCard(
+                                    profile: profile,
+                                    latestActivity: viewModel.latestActivity,
+                                    latestVitalSign: viewModel.latestVitalSign)
                                     .padding(.horizontal, 24)
                                     .padding(.bottom, 8)
                                     .overlay(

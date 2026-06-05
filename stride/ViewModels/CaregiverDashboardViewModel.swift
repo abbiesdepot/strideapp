@@ -8,6 +8,8 @@ class CaregiverDashboardViewModel: ObservableObject {
     @Published var family: Family?
     @Published var isLoading = false
     @Published var errorMessage: String?
+    @Published var latestActivity: ActivityLog?
+    @Published var latestVitalSign: VitalSign?
     
     private var db = Firestore.firestore()
     private var listenerRegistration: ListenerRegistration?
@@ -36,6 +38,8 @@ class CaregiverDashboardViewModel: ObservableObject {
                     self.family = try document.data(as: Family.self)
                     if let elderlyID = self.family?.elderlyID {
                         self.listenToElderlyProfile(elderlyID: elderlyID)
+                        self.fetchLatestActivity(elderlyID: elderlyID)
+                        self.fetchLatestVitalSign(elderlyID: elderlyID)
                     }
                 } catch {
                     self.isLoading = false
@@ -133,5 +137,45 @@ class CaregiverDashboardViewModel: ObservableObject {
     
     deinit {
         listenerRegistration?.remove()
+    }
+    
+    private func fetchLatestActivity(elderlyID: String) {
+
+        db.collection("activityLogs")
+            .whereField("elderlyID", isEqualTo: elderlyID)
+            .order(by: "recordedAt", descending: true)
+            .limit(to: 1)
+            .getDocuments { [weak self] snapshot, error in
+
+                guard let self = self else { return }
+
+                if let document = snapshot?.documents.first {
+                    do {
+                        self.latestActivity = try document.data(as: ActivityLog.self)
+                    } catch {
+                        self.errorMessage = error.localizedDescription
+                    }
+                }
+            }
+    }
+    
+    private func fetchLatestVitalSign(elderlyID: String) {
+
+        db.collection("vitalSigns")
+            .whereField("elderlyID", isEqualTo: elderlyID)
+            .order(by: "recordedAt", descending: true)
+            .limit(to: 1)
+            .getDocuments { [weak self] snapshot, error in
+
+                guard let self = self else { return }
+
+                if let document = snapshot?.documents.first {
+                    do {
+                        self.latestVitalSign = try document.data(as: VitalSign.self)
+                    } catch {
+                        self.errorMessage = error.localizedDescription
+                    }
+                }
+            }
     }
 }

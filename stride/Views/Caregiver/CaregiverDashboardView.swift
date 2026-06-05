@@ -43,7 +43,10 @@ struct CaregiverDashboardView: View {
 
                         // JIKA DATA ADA
                         NavigationLink(destination: ElderlyDetailView(profile: profile)) {
-                            ElderlyDashboardCard(profile: profile)
+                            ElderlyDashboardCard(
+                                profile: profile,
+                                latestActivity: viewModel.latestActivity,
+                                latestVitalSign: viewModel.latestVitalSign)
                         }
                         .buttonStyle(PlainButtonStyle())
                         .padding(.horizontal, 24)

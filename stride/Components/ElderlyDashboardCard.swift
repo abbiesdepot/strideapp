@@ -2,6 +2,8 @@ import SwiftUI
 
 struct ElderlyDashboardCard: View {
     let profile: ElderlyProfile
+    let latestActivity: ActivityLog?
+    let latestVitalSign: VitalSign?
     
     var body: some View {
         VStack(spacing: 16) {
@@ -37,12 +39,13 @@ struct ElderlyDashboardCard: View {
             
             // Stats Row
             HStack {
-                StatItem(icon: "figure.walk", value: "\(profile.stepCount)", label: "Steps today")
-                Spacer()
-                StatItem(icon: "map", value: String(format: "%.1f km", profile.distanceKM), label: "Distance")
-                Spacer()
-                // Fake data for now, usually fetched from latest vital sign
-                StatItem(icon: "heart.fill", value: "72 bpm", label: "Heart Rate")
+                StatItem(icon: "figure.walk",value: "\(latestActivity?.stepCount ?? profile.stepCount)",label: "Steps today")
+                            Spacer()
+                            StatItem(icon: "map",value: String(format: "%.1f km",latestActivity?.distanceKM ?? profile.distanceKM),label: "Distance")
+                            Spacer()
+                            StatItem(icon: "heart.fill",value: latestVitalSign != nil
+                                     ? "\(Int(latestVitalSign!.heartRate)) bpm"
+                                     : "-- bpm",label: "Heart Rate")
             }
             
             // Reason Text
@@ -104,6 +107,21 @@ struct StatItem: View {
             liveStatus: "green",
             liveStatusReason: "All medications taken",
             createdAt: Date()
+        ),
+            latestActivity: ActivityLog(
+            id: "a1",
+            elderlyID: "123",
+            stepCount: 4500,
+            distanceKM: 3.8,
+            idleMinutes: 20,
+            recordedAt: Date()
+        ),
+        latestVitalSign: VitalSign(
+            id: "v1",
+            elderlyID: "123",
+            heartRate: 74,
+            spO2: 98,
+            recordedAt: Date()
         ))
         .padding()
     }

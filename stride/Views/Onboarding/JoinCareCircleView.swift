@@ -106,6 +106,18 @@ struct JoinCareCircleView: View {
             Spacer()
         }
         .background(Color.strideCardWhite.ignoresSafeArea())
+        // 👇 TAMBAHAN TOMBOL SIGN OUT DI SINI 👇
+        .toolbar {
+            ToolbarItem(placement: .navigationBarTrailing) {
+                Button(action: {
+                    authViewModel.logout() // Menggunakan logout() sesuai file AuthViewModel kamu
+                }) {
+                    Text("Sign Out")
+                        .foregroundColor(.strideRed) // Menggunakan warna merah bawaan app kamu
+                        .font(.system(size: 16, weight: .semibold))
+                }
+            }
+        }
         .navigationDestination(isPresented: $isSuccess) {
             FamilyMainView()
                 .navigationBarBackButtonHidden(true)

@@ -20,7 +20,6 @@ class CaregiverDashboardViewModel: ObservableObject {
             .getDocuments { [weak self] snapshot, error in
                 guard let self = self else { return }
                 
-                //ini masi gtau in progress fixing nya
                 if let error = error {
                     self.isLoading = false
                     self.errorMessage = error.localizedDescription
@@ -71,12 +70,17 @@ class CaregiverDashboardViewModel: ObservableObject {
             }
     }
     
-    func createElderlyProfile(caregiverID: String, fullName: String, age: Int, medicalNotes: String, completion: @escaping (Bool) -> Void) {
+    // MARK: - Updated Function with New Parameters
+    func createElderlyProfile(caregiverID: String, fullName: String, age: Int, height: Double?, weight: Double?, bloodType: String?, medicalNotes: String, notes: String?, completion: @escaping (Bool) -> Void) {
         isLoading = true
         
         let newElderly = ElderlyProfile(
             fullName: fullName,
             age: age,
+            height: height,
+            weight: weight,
+            bloodType: bloodType,
+            notes: notes,
             photoURL: nil,
             medicalNotes: medicalNotes,
             familyID: nil, // bakal be set after Family creation

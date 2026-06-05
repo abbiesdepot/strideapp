@@ -7,10 +7,16 @@ struct ElderlySetupView: View {
     
     @State private var step = 1
     
-    // Form Data
+    // MARK: - Form Data
     @State private var fullName = ""
     @State private var ageString = ""
+    @State private var heightString = ""
+    @State private var weightString = ""
+    @State private var bloodType = "A"
     @State private var medicalNotes = ""
+    @State private var notes = ""
+    
+    let bloodTypes = ["A", "B", "AB", "O", "A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"]
     
     var isFormValid: Bool {
         !fullName.isEmpty && Int(ageString) != nil
@@ -58,39 +64,87 @@ struct ElderlySetupView: View {
     }
     
     var step1View: some View {
-        VStack(spacing: 20) {
-            Text("Elderly Profile")
-                .font(.system(size: 24, weight: .bold))
-                .foregroundColor(.stridePrimary)
-            
-            VStack(spacing: 16) {
-                InputField(placeholder: "Full Name", text: $fullName)
-                InputField(placeholder: "Age", text: $ageString)
+        // Menggunakan ScrollView agar form panjang tidak terpotong di layar kecil
+        ScrollView(showsIndicators: false) {
+            VStack(spacing: 20) {
+                Text("Elderly Profile")
+                    .font(.system(size: 24, weight: .bold))
+                    .foregroundColor(.stridePrimary)
                 
-                TextField("Medical Notes (Optional)", text: $medicalNotes, axis: .vertical)
-                    .lineLimit(4, reservesSpace: true)
-                    .padding()
-                    .background(Color.strideBackground)
-                    .cornerRadius(StrideTheme.cornerRadiusButton)
-                    .overlay(
-                        RoundedRectangle(cornerRadius: StrideTheme.cornerRadiusButton)
-                            .stroke(Color.strideNeutral.opacity(0.2), lineWidth: 1)
-                    )
+                VStack(spacing: 16) {
+                    InputField(placeholder: "Full Name", text: $fullName)
+                    
+                    HStack(spacing: 16) {
+                        InputField(placeholder: "Age", text: $ageString)
+                        
+                        // Menu Dropdown untuk Blood Type
+                        Menu {
+                            ForEach(bloodTypes, id: \.self) { type in
+                                Button(type) {
+                                    bloodType = type
+                                }
+                            }
+                        } label: {
+                            HStack {
+                                Text("Blood: \(bloodType)")
+                                    .foregroundColor(.strideTextPrimary)
+                                Spacer()
+                                Image(systemName: "chevron.down")
+                                    .foregroundColor(Color.strideNeutral)
+                            }
+                            .padding()
+                            // Memberi height agar sejajar dengan InputField bawaan
+                            .frame(minHeight: 50)
+                            .background(Color.strideBackground)
+                            .cornerRadius(StrideTheme.cornerRadiusButton)
+                            .overlay(
+                                RoundedRectangle(cornerRadius: StrideTheme.cornerRadiusButton)
+                                    .stroke(Color.strideNeutral.opacity(0.2), lineWidth: 1)
+                            )
+                        }
+                    }
+                    
+                    HStack(spacing: 16) {
+                        InputField(placeholder: "Height (cm)", text: $heightString)
+                        InputField(placeholder: "Weight (kg)", text: $weightString)
+                    }
+                    
+                    TextField("Medical Notes (Optional)", text: $medicalNotes, axis: .vertical)
+                        .lineLimit(4, reservesSpace: true)
+                        .padding()
+                        .background(Color.strideBackground)
+                        .cornerRadius(StrideTheme.cornerRadiusButton)
+                        .overlay(
+                            RoundedRectangle(cornerRadius: StrideTheme.cornerRadiusButton)
+                                .stroke(Color.strideNeutral.opacity(0.2), lineWidth: 1)
+                        )
+                        
+                    TextField("General Notes (Optional)", text: $notes, axis: .vertical)
+                        .lineLimit(4, reservesSpace: true)
+                        .padding()
+                        .background(Color.strideBackground)
+                        .cornerRadius(StrideTheme.cornerRadiusButton)
+                        .overlay(
+                            RoundedRectangle(cornerRadius: StrideTheme.cornerRadiusButton)
+                                .stroke(Color.strideNeutral.opacity(0.2), lineWidth: 1)
+                        )
+                }
+                
+                Button(action: {
+                    withAnimation { step = 2 }
+                }) {
+                    Text("Continue")
+                        .font(.system(size: 16, weight: .bold))
+                        .frame(maxWidth: .infinity)
+                        .padding()
+                        .background(isFormValid ? Color.stridePrimary : Color.strideNeutral.opacity(0.5))
+                        .foregroundColor(.white)
+                        .cornerRadius(StrideTheme.cornerRadiusButton)
+                }
+                .disabled(!isFormValid)
+                .padding(.top, 16)
             }
-            
-            Button(action: {
-                withAnimation { step = 2 }
-            }) {
-                Text("Continue")
-                    .font(.system(size: 16, weight: .bold))
-                    .frame(maxWidth: .infinity)
-                    .padding()
-                    .background(isFormValid ? Color.stridePrimary : Color.strideNeutral.opacity(0.5))
-                    .foregroundColor(.white)
-                    .cornerRadius(StrideTheme.cornerRadiusButton)
-            }
-            .disabled(!isFormValid)
-            .padding(.top, 16)
+            .padding(.bottom, 20) // Memberikan sedikit ruang di bawah saat di-scroll penuh
         }
     }
     
@@ -120,7 +174,21 @@ struct ElderlySetupView: View {
             
             Button(action: {
                 guard let uid = authViewModel.currentUser?.id, let age = Int(ageString) else { return }
-                viewModel.createElderlyProfile(caregiverID: uid, fullName: fullName, age: age, medicalNotes: medicalNotes) { success in
+                
+                // Konversi String ke Double untuk menyamakan tipe data di model
+                let parsedHeight = Double(heightString)
+                let parsedWeight = Double(weightString)
+                
+                viewModel.createElderlyProfile(
+                    caregiverID: uid,
+                    fullName: fullName,
+                    age: age,
+                    height: parsedHeight,
+                    weight: parsedWeight,
+                    bloodType: bloodType,
+                    medicalNotes: medicalNotes,
+                    notes: notes
+                ) { success in
                     if success {
                         withAnimation { step = 3 }
                     }

@@ -14,6 +14,13 @@ struct ElderlyProfile: Codable, Identifiable {
     @DocumentID var id: String?
     var fullName: String
     var age: Int
+    
+    // MARK: - New Fields Added
+    var height: Double?
+    var weight: Double?
+    var bloodType: String?
+    var notes: String?
+    
     var photoURL: String?
     var medicalNotes: String?
     var familyID: String?

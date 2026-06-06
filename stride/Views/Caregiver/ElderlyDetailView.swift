@@ -1,13 +1,125 @@
 import SwiftUI
+import FirebaseFirestore
 
 struct ElderlyDetailView: View {
-    var profile: ElderlyProfile
+    let elderlyID: String
+
+    @State private var profile: ElderlyProfile?
+    @State private var isLoadingProfile = true
+
+    @State private var selectedTab = 0
+    @State private var showEditSheet = false
+
+    @StateObject private var medVM = MedicationViewModel()
+    @State private var showAddMedSheet = false
+    @State private var selectedMedication: Medication? = nil
+    @State private var showDeleteConfirmAlert = false
+    @State private var medicationToDelete: Medication? = nil
 
     var body: some View {
+        VStack(spacing: 0) {
+            Picker("", selection: $selectedTab) {
+                Text("Overview").tag(0)
+                Text("Medications").tag(1)
+                Text("History").tag(2)
+            }
+            .pickerStyle(.segmented)
+            .padding(.horizontal, 20)
+            .padding(.vertical, 12)
+            .background(Color.strideBackground)
+
+            if isLoadingProfile && profile == nil {
+                Spacer()
+                ProgressView()
+                Spacer()
+            } else if let profile = profile {
+                if selectedTab == 0 {
+                    overviewTab(profile: profile)
+                } else if selectedTab == 1 {
+                    medicationsTab
+                } else {
+                    historyTab
+                }
+            } else {
+                Spacer()
+                Text("Could not load profile.")
+                    .foregroundColor(.strideTextSecondary)
+                Spacer()
+            }
+        }
+        .background(Color.strideBackground.ignoresSafeArea())
+        .navigationTitle("Profile Details")
+        .navigationBarTitleDisplayMode(.inline)
+        .toolbar {
+            if selectedTab == 0 {
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button(action: { showEditSheet = true }) {
+                        Image(systemName: "pencil")
+                    }
+                }
+            } else if selectedTab == 1 {
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button(action: { showAddMedSheet = true }) {
+                        Image(systemName: "plus")
+                            .fontWeight(.bold)
+                    }
+                }
+            }
+        }
+        .task {
+            await loadProfile()
+        }
+        .onAppear {
+            medVM.fetchMedications(elderlyID: elderlyID)
+        }
+        .sheet(isPresented: $showEditSheet) {
+            if let profile = profile {
+                EditProfileSheet(elderlyID: elderlyID, profile: profile) { updated in
+                    self.profile = updated
+                }
+            }
+        }
+        .sheet(isPresented: $showAddMedSheet) {
+            AddMedicationSheet(elderlyID: elderlyID, medVM: medVM)
+        }
+        .sheet(item: $selectedMedication) { med in
+            EditMedicationSheet(medication: med, medVM: medVM)
+        }
+        .alert("Delete Medication?", isPresented: $showDeleteConfirmAlert) {
+            Button("Delete", role: .destructive) {
+                if let med = medicationToDelete, let id = med.id {
+                    medVM.deleteMedication(medicationID: id)
+                }
+                medicationToDelete = nil
+            }
+            Button("Cancel", role: .cancel) {
+                medicationToDelete = nil
+            }
+        } message: {
+            Text("This action cannot be undone.")
+        }
+    }
+
+    private func loadProfile() async {
+        isLoadingProfile = true
+        do {
+            let snapshot = try await Firestore.firestore()
+                .collection("elderlyProfiles")
+                .document(elderlyID)
+                .getDocument()
+            profile = try snapshot.data(as: ElderlyProfile.self)
+        } catch {
+            profile = nil
+        }
+        isLoadingProfile = false
+    }
+
+
+    @ViewBuilder
+    private func overviewTab(profile: ElderlyProfile) -> some View {
         ScrollView {
             VStack(spacing: 24) {
 
-                // FOTO & INFO UTAMA
                 VStack(spacing: 12) {
                     Circle()
                         .fill(Color.strideTertiary.opacity(0.3))
@@ -30,13 +142,12 @@ struct ElderlyDetailView: View {
                 }
                 .padding(.top, 24)
 
-                // STATS ROW
                 HStack {
-                    StatItem(icon: "figure.walk", value: "\(profile.stepCount)", label: "Steps today")
+                    ProfileStatItem(icon: "figure.walk", value: "\(profile.stepCount)", label: "Steps today")
                     Spacer()
-                    StatItem(icon: "map", value: String(format: "%.1f km", profile.distanceKM), label: "Distance")
+                    ProfileStatItem(icon: "map", value: String(format: "%.1f km", profile.distanceKM), label: "Distance")
                     Spacer()
-                    StatItem(icon: "heart.fill", value: "72 bpm", label: "Heart Rate")
+                    ProfileStatItem(icon: "heart.fill", value: "72 bpm", label: "Heart Rate")
                 }
                 .padding(20)
                 .background(Color.strideCardWhite)
@@ -44,30 +155,24 @@ struct ElderlyDetailView: View {
                 .shadow(color: StrideTheme.shadowColor, radius: StrideTheme.shadowRadius, x: 0, y: 4)
                 .padding(.horizontal, 24)
 
-                // PHYSICAL INFO
                 VStack(alignment: .leading, spacing: 16) {
                     Text("Physical Information")
                         .font(.system(size: 18, weight: .bold))
                         .foregroundColor(.stridePrimary)
 
                     HStack(spacing: 12) {
-                        // Height
                         InfoTile(
                             icon: "ruler",
                             iconColor: .strideSecondary,
                             label: "Height",
                             value: profile.height != nil ? String(format: "%.0f cm", profile.height!) : "—"
                         )
-
-                        // Weight
                         InfoTile(
                             icon: "scalemass",
                             iconColor: .strideSecondary,
                             label: "Weight",
                             value: profile.weight != nil ? String(format: "%.0f kg", profile.weight!) : "—"
                         )
-
-                        // Blood Type
                         InfoTile(
                             icon: "drop.fill",
                             iconColor: .strideRed,
@@ -78,7 +183,6 @@ struct ElderlyDetailView: View {
                 }
                 .padding(.horizontal, 24)
 
-                // MEDICAL NOTES
                 if let medicalNotes = profile.medicalNotes, !medicalNotes.isEmpty {
                     NoteCard(
                         icon: "heart.text.square",
@@ -89,7 +193,6 @@ struct ElderlyDetailView: View {
                     .padding(.horizontal, 24)
                 }
 
-                // GENERAL NOTES
                 if let notes = profile.notes, !notes.isEmpty {
                     NoteCard(
                         icon: "note.text",
@@ -100,7 +203,6 @@ struct ElderlyDetailView: View {
                     .padding(.horizontal, 24)
                 }
 
-                // STATUS REASON
                 if !profile.liveStatusReason.isEmpty {
                     HStack {
                         Image(systemName: "info.circle")
@@ -120,12 +222,344 @@ struct ElderlyDetailView: View {
             }
         }
         .background(Color.strideBackground.ignoresSafeArea())
-        .navigationTitle("Profile Details")
-        .navigationBarTitleDisplayMode(.inline)
+    }
+
+    @ViewBuilder
+    private var medicationsTab: some View {
+        if medVM.isLoading {
+            Spacer()
+            ProgressView()
+            Spacer()
+        } else if medVM.medications.isEmpty {
+            Spacer()
+            VStack(spacing: 16) {
+                Image(systemName: "pills")
+                    .font(.system(size: 60))
+                    .foregroundColor(.strideSecondary)
+                Text("No Medications")
+                    .font(.system(size: 20, weight: .bold))
+                    .foregroundColor(.stridePrimary)
+                Text("Tap + to add a medication.")
+                    .foregroundColor(.strideTextSecondary)
+            }
+            Spacer()
+        } else {
+            List {
+                ForEach(medVM.medications) { med in
+                    Button(action: { selectedMedication = med }) {
+                        MedicationRow(medication: med)
+                    }
+                    .buttonStyle(.plain)
+                    .swipeActions(edge: .trailing) {
+                        Button(role: .destructive) {
+                            medicationToDelete = med
+                            showDeleteConfirmAlert = true
+                        } label: {
+                            Label("Delete", systemImage: "trash")
+                        }
+                    }
+                    .listRowBackground(Color.strideBackground)
+                    .listRowSeparator(.hidden)
+                    .listRowInsets(EdgeInsets(top: 6, leading: 20, bottom: 6, trailing: 20))
+                }
+            }
+            .listStyle(.plain)
+            .background(Color.strideBackground)
+        }
+    }
+
+    @ViewBuilder
+    private var historyTab: some View {
+        WeeklyHealthTrendView()
     }
 }
 
-// MARK: - Supporting Views
+private struct MedicationRow: View {
+    let medication: Medication
+
+    var body: some View {
+        HStack(spacing: 12) {
+            ZStack {
+                Circle()
+                    .fill(Color.strideSecondary.opacity(0.15))
+                    .frame(width: 44, height: 44)
+                Image(systemName: "pills.fill")
+                    .font(.system(size: 20))
+                    .foregroundColor(.strideSecondary)
+            }
+            VStack(alignment: .leading, spacing: 4) {
+                Text(medication.name)
+                    .font(.system(size: 16, weight: .semibold))
+                    .foregroundColor(.stridePrimary)
+                Text(medication.dosage)
+                    .font(.system(size: 14))
+                    .foregroundColor(.strideTextSecondary)
+            }
+            Spacer()
+            VStack(alignment: .trailing, spacing: 4) {
+                Text(medication.scheduleTime)
+                    .font(.system(size: 14, weight: .medium))
+                    .foregroundColor(.strideSecondary)
+                Text(medication.frequency)
+                    .font(.system(size: 12))
+                    .foregroundColor(.strideTextSecondary)
+            }
+        }
+        .padding(14)
+        .background(Color.strideCardWhite)
+        .cornerRadius(StrideTheme.cornerRadiusCard)
+        .shadow(color: StrideTheme.shadowColor, radius: StrideTheme.shadowRadius, x: 0, y: 2)
+    }
+}
+
+private struct EditProfileSheet: View {
+    let elderlyID: String
+    let profile: ElderlyProfile
+    let onSave: (ElderlyProfile) -> Void
+
+    @Environment(\.dismiss) private var dismiss
+
+    @State private var fullName: String
+    @State private var age: String
+    @State private var heightStr: String
+    @State private var weightStr: String
+    @State private var bloodType: String
+    @State private var medicalNotes: String
+    @State private var notes: String
+    @State private var isSaving = false
+
+    init(elderlyID: String, profile: ElderlyProfile, onSave: @escaping (ElderlyProfile) -> Void) {
+        self.elderlyID = elderlyID
+        self.profile = profile
+        self.onSave = onSave
+        _fullName = State(initialValue: profile.fullName)
+        _age = State(initialValue: "\(profile.age)")
+        _heightStr = State(initialValue: profile.height != nil ? String(format: "%.0f", profile.height!) : "")
+        _weightStr = State(initialValue: profile.weight != nil ? String(format: "%.0f", profile.weight!) : "")
+        _bloodType = State(initialValue: profile.bloodType ?? "")
+        _medicalNotes = State(initialValue: profile.medicalNotes ?? "")
+        _notes = State(initialValue: profile.notes ?? "")
+    }
+
+    var body: some View {
+        NavigationStack {
+            Form {
+                Section(header: Text("Basic Info")) {
+                    TextField("Full Name", text: $fullName)
+                    TextField("Age", text: $age)
+                        .keyboardType(.numberPad)
+                }
+                Section(header: Text("Physical")) {
+                    TextField("Height (cm)", text: $heightStr)
+                        .keyboardType(.decimalPad)
+                    TextField("Weight (kg)", text: $weightStr)
+                        .keyboardType(.decimalPad)
+                    TextField("Blood Type", text: $bloodType)
+                }
+                Section(header: Text("Notes")) {
+                    TextField("Medical Notes", text: $medicalNotes, axis: .vertical)
+                        .lineLimit(3...6)
+                    TextField("General Notes", text: $notes, axis: .vertical)
+                        .lineLimit(3...6)
+                }
+            }
+            .navigationTitle("Edit Profile")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Cancel") { dismiss() }
+                }
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("Save") {
+                        save()
+                    }
+                    .disabled(fullName.isEmpty || isSaving)
+                }
+            }
+        }
+    }
+
+    private func save() {
+        isSaving = true
+        var data: [String: Any] = [
+            "fullName": fullName,
+            "bloodType": bloodType,
+            "medicalNotes": medicalNotes,
+            "notes": notes
+        ]
+        if let ageInt = Int(age) {
+            data["age"] = ageInt
+        }
+        if let h = Double(heightStr) {
+            data["height"] = h
+        }
+        if let w = Double(weightStr) {
+            data["weight"] = w
+        }
+
+        Firestore.firestore().collection("elderlyProfiles").document(elderlyID).updateData(data) { _ in
+            isSaving = false
+            var updated = profile
+            updated.fullName = fullName
+            if let ageInt = Int(age) { updated.age = ageInt }
+            updated.height = Double(heightStr)
+            updated.weight = Double(weightStr)
+            updated.bloodType = bloodType.isEmpty ? nil : bloodType
+            updated.medicalNotes = medicalNotes.isEmpty ? nil : medicalNotes
+            updated.notes = notes.isEmpty ? nil : notes
+            onSave(updated)
+            dismiss()
+        }
+    }
+}
+
+private struct AddMedicationSheet: View {
+    let elderlyID: String
+    let medVM: MedicationViewModel
+
+    @Environment(\.dismiss) private var dismiss
+
+    @State private var name = ""
+    @State private var dosage = ""
+    @State private var frequency = "Once daily"
+    @State private var scheduleTime = Date()
+
+    let frequencies = ["Once daily", "Twice daily", "Three times daily", "As needed"]
+
+    var body: some View {
+        NavigationStack {
+            Form {
+                Section(header: Text("Details")) {
+                    TextField("Medication Name", text: $name)
+                    TextField("Dosage (e.g., 10mg)", text: $dosage)
+                    Picker("Frequency", selection: $frequency) {
+                        ForEach(frequencies, id: \.self) { Text($0) }
+                    }
+                }
+                Section(header: Text("Schedule")) {
+                    DatePicker("Time", selection: $scheduleTime, displayedComponents: .hourAndMinute)
+                }
+            }
+            .navigationTitle("Add Medication")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Cancel") { dismiss() }
+                }
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("Save") {
+                        let formatter = DateFormatter()
+                        formatter.dateFormat = "HH:mm"
+                        let timeString = formatter.string(from: scheduleTime)
+                        medVM.addMedication(
+                            elderlyID: elderlyID,
+                            name: name,
+                            dosage: dosage,
+                            frequency: frequency,
+                            scheduleTime: timeString
+                        )
+                        dismiss()
+                    }
+                    .disabled(name.isEmpty || dosage.isEmpty)
+                }
+            }
+        }
+    }
+}
+
+private struct EditMedicationSheet: View {
+    let medication: Medication
+    let medVM: MedicationViewModel
+
+    @Environment(\.dismiss) private var dismiss
+
+    @State private var name: String
+    @State private var dosage: String
+    @State private var frequency: String
+    @State private var scheduleTime: Date
+    @State private var isSaving = false
+
+    let frequencies = ["Once daily", "Twice daily", "Three times daily", "As needed"]
+
+    init(medication: Medication, medVM: MedicationViewModel) {
+        self.medication = medication
+        self.medVM = medVM
+        _name = State(initialValue: medication.name)
+        _dosage = State(initialValue: medication.dosage)
+        _frequency = State(initialValue: medication.frequency)
+        let formatter = DateFormatter()
+        formatter.dateFormat = "HH:mm"
+        _scheduleTime = State(initialValue: formatter.date(from: medication.scheduleTime) ?? Date())
+    }
+
+    var body: some View {
+        NavigationStack {
+            Form {
+                Section(header: Text("Details")) {
+                    TextField("Medication Name", text: $name)
+                    TextField("Dosage (e.g., 10mg)", text: $dosage)
+                    Picker("Frequency", selection: $frequency) {
+                        ForEach(frequencies, id: \.self) { Text($0) }
+                    }
+                }
+                Section(header: Text("Schedule")) {
+                    DatePicker("Time", selection: $scheduleTime, displayedComponents: .hourAndMinute)
+                }
+            }
+            .navigationTitle("Edit Medication")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Cancel") { dismiss() }
+                }
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("Save") {
+                        save()
+                    }
+                    .disabled(name.isEmpty || dosage.isEmpty || isSaving)
+                }
+            }
+        }
+    }
+
+    private func save() {
+        guard let id = medication.id else { return }
+        isSaving = true
+        let formatter = DateFormatter()
+        formatter.dateFormat = "HH:mm"
+        let timeString = formatter.string(from: scheduleTime)
+        Firestore.firestore().collection("medications").document(id).updateData([
+            "name": name,
+            "dosage": dosage,
+            "frequency": frequency,
+            "scheduleTime": timeString
+        ]) { _ in
+            isSaving = false
+            dismiss()
+        }
+    }
+}
+
+private struct ProfileStatItem: View {
+    let icon: String
+    let value: String
+    let label: String
+
+    var body: some View {
+        VStack(spacing: 6) {
+            Image(systemName: icon)
+                .font(.system(size: 22))
+                .foregroundColor(.strideSecondary)
+            Text(value)
+                .font(.system(size: 16, weight: .bold))
+                .foregroundColor(.strideTextPrimary)
+            Text(label)
+                .font(.system(size: 12))
+                .foregroundColor(.strideTextSecondary)
+        }
+        .frame(maxWidth: .infinity)
+    }
+}
 
 private struct InfoTile: View {
     let icon: String
@@ -138,11 +572,9 @@ private struct InfoTile: View {
             Image(systemName: icon)
                 .font(.system(size: 22))
                 .foregroundColor(iconColor)
-
             Text(value)
                 .font(.system(size: 16, weight: .bold))
                 .foregroundColor(.strideTextPrimary)
-
             Text(label)
                 .font(.system(size: 12))
                 .foregroundColor(.strideTextSecondary)
@@ -171,7 +603,6 @@ private struct NoteCard: View {
                     .foregroundColor(.strideTextPrimary)
                 Spacer()
             }
-
             Text(content)
                 .font(.system(size: 14))
                 .foregroundColor(.strideTextSecondary)

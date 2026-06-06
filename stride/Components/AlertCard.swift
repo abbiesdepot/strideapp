@@ -27,7 +27,7 @@ struct AlertCard: View {
                 .frame(width: 6)
             
             HStack(spacing: 16) {
-                // Icon
+                // icon
                 Circle()
                     .fill((alert.isResolved ? Color.strideNeutral : severityColor).opacity(0.15))
                     .frame(width: 44, height: 44)
@@ -37,7 +37,7 @@ struct AlertCard: View {
                             .font(.system(size: 20))
                     )
                 
-                // Details
+                // details
                 VStack(alignment: .leading, spacing: 4) {
                     Text(alert.message)
                         .font(.system(size: 16, weight: .semibold, design: .default))

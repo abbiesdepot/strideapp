@@ -6,7 +6,6 @@ struct DailySummaryView: View {
     var body: some View {
         ScrollView {
             VStack(spacing: 24) {
-                // Top section
                 VStack(spacing: 12) {
                     Circle()
                         .fill(Color.strideTertiary.opacity(0.3))
@@ -21,7 +20,6 @@ struct DailySummaryView: View {
                 }
                 .padding(.top, 20)
                 
-                // Stat Cards
                 HStack(spacing: 16) {
                     MiniStatCard(title: "Steps", value: "\(profile.stepCount)", icon: "figure.walk")
                     MiniStatCard(title: "Distance", value: String(format: "%.1f km", profile.distanceKM), icon: "map")

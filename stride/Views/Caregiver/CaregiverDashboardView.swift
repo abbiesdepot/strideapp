@@ -42,10 +42,27 @@ struct CaregiverDashboardView: View {
                     } else if let profile = viewModel.elderlyProfile {
 
                         // JIKA DATA ADA
-                        NavigationLink(destination: ElderlyDetailView(profile: profile)) {
+                        NavigationLink(destination: ElderlyDetailView(elderlyID: profile.id ?? "")) {
                             ElderlyDashboardCard(profile: profile)
                         }
                         .buttonStyle(PlainButtonStyle())
+                        .padding(.horizontal, 24)
+
+                        HStack(spacing: 16) {
+                            NavigationLink(destination: ElderlyDetailView(elderlyID: profile.id ?? "")) {
+                                Text("View Details →")
+                                    .font(.system(size: 14, weight: .semibold))
+                                    .foregroundColor(.strideSecondary)
+                            }
+                            .buttonStyle(.plain)
+
+                            NavigationLink(destination: WeeklyHealthTrendView()) {
+                                Text("View Trends →")
+                                    .font(.system(size: 14, weight: .semibold))
+                                    .foregroundColor(.strideSecondary)
+                            }
+                            .buttonStyle(.plain)
+                        }
                         .padding(.horizontal, 24)
 
                     } else {

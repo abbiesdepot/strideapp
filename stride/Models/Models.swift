@@ -6,7 +6,7 @@ struct StrideUser: Codable, Identifiable {
     var fullName: String
     var email: String
     var phoneNumber: String
-    var role: String // "caregiver" or "family_member"
+    var role: String
     var createdAt: Date?
 }
 
@@ -15,7 +15,6 @@ struct ElderlyProfile: Codable, Identifiable {
     var fullName: String
     var age: Int
     
-    // MARK: - New Fields Added
     var height: Double?
     var weight: Double?
     var bloodType: String?
@@ -84,6 +83,7 @@ struct Alert: Codable, Identifiable {
     var message: String
     var isResolved: Bool
     var triggeredAt: Date
+    var seenBy: [String]?
 }
 
 struct VitalSign: Codable, Identifiable {

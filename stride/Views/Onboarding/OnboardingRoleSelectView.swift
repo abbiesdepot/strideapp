@@ -8,7 +8,6 @@ struct OnboardingRoleSelectView: View {
         VStack(spacing: 24) {
             Spacer()
             
-            // Header
             VStack(spacing: 8) {
                 Text("STRIDE")
                     .font(.system(size: 28, weight: .black, design: .default))
@@ -31,7 +30,6 @@ struct OnboardingRoleSelectView: View {
             }
             .frame(maxWidth: .infinity, alignment: .leading)
             
-            // Role Cards
             VStack(spacing: 16) {
                 RoleCard(
                     icon: "stethoscope",

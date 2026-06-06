@@ -17,7 +17,6 @@ struct FamilyRoutingView: View {
     var body: some View {
         Group {
             if isChecking {
-                // Layar loading singkat saat mengecek database
                 ZStack {
                     Color.strideBackground.ignoresSafeArea()
                     VStack(spacing: 16) {
@@ -30,10 +29,8 @@ struct FamilyRoutingView: View {
                     }
                 }
             } else if hasJoinedFamily {
-                // Jika sudah punya keluarga, langsung ke Dashboard Utama
                 FamilyMainView()
             } else {
-                // Jika belum, suruh masukkan kode
                 NavigationStack {
                     JoinCareCircleView()
                 }

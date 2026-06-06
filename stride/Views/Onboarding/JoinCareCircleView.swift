@@ -3,6 +3,10 @@ import SwiftUI
 struct JoinCareCircleView: View {
     @EnvironmentObject var authViewModel: AuthViewModel
     @StateObject private var familyVM = FamilyDashboardViewModel()
+
+    /// When non-nil this view is presented as a sheet; on success the closure is called
+    /// and the sheet is dismissed by the caller — `authViewModel.isInCareCircle` is NOT set.
+    var onJoinSuccess: (() -> Void)? = nil
     
     @State private var inviteCode = ""
     @State private var isSuccess = false
@@ -15,7 +19,6 @@ struct JoinCareCircleView: View {
         VStack(spacing: 32) {
             Spacer()
             
-            // Illustration
             Circle()
                 .fill(Color.strideSecondary.opacity(0.15))
                 .frame(width: 120, height: 120)
@@ -37,7 +40,6 @@ struct JoinCareCircleView: View {
                     .padding(.horizontal, 32)
             }
             
-            // Invite Code Box
             VStack(alignment: .leading, spacing: 8) {
                 Text("INVITE CODE")
                     .font(.system(size: 12, weight: .bold))
@@ -79,7 +81,13 @@ struct JoinCareCircleView: View {
                 if let uid = authViewModel.currentUser?.id {
                     familyVM.joinCareCircle(inviteCode: inviteCode, userID: uid) { success, error in
                         if success {
-                            isSuccess = true
+                            if let onJoinSuccess {
+                                // sheet mode: let the caller handle dismissal and refresh
+                                onJoinSuccess()
+                            } else {
+                                authViewModel.isInCareCircle = true
+                                isSuccess = true
+                            }
                         }
                     }
                 }
@@ -106,14 +114,13 @@ struct JoinCareCircleView: View {
             Spacer()
         }
         .background(Color.strideCardWhite.ignoresSafeArea())
-        // 👇 TAMBAHAN TOMBOL SIGN OUT DI SINI 👇
         .toolbar {
             ToolbarItem(placement: .navigationBarTrailing) {
                 Button(action: {
-                    authViewModel.logout() // Menggunakan logout() sesuai file AuthViewModel kamu
+                    authViewModel.logout()
                 }) {
                     Text("Sign Out")
-                        .foregroundColor(.strideRed) // Menggunakan warna merah bawaan app kamu
+                        .foregroundColor(.strideRed)
                         .font(.system(size: 16, weight: .semibold))
                 }
             }

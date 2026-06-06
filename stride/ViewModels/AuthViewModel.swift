@@ -8,6 +8,8 @@ class AuthViewModel: ObservableObject {
     @Published var isAuthenticated: Bool = false
     @Published var isLoading: Bool = false
     @Published var errorMessage: String?
+    /// Whether the current family_member user belongs to at least one care circle.
+    @Published var isInCareCircle: Bool = false
     
     private var db = Firestore.firestore()
     private var cancellables = Set<AnyCancellable>()
@@ -77,6 +79,16 @@ class AuthViewModel: ObservableObject {
         } catch {
             self.errorMessage = error.localizedDescription
         }
+    }
+
+    func checkCareCircleMembership(uid: String) {
+        db.collection("familyMembers")
+            .whereField("userID", isEqualTo: uid)
+            .getDocuments { [weak self] snapshot, _ in
+                DispatchQueue.main.async {
+                    self?.isInCareCircle = !(snapshot?.documents.isEmpty ?? true)
+                }
+            }
     }
     
     private func fetchUserRecord(uid: String) {

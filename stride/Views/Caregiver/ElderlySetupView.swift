@@ -7,7 +7,6 @@ struct ElderlySetupView: View {
     
     @State private var step = 1
     
-    // MARK: - Form Data
     @State private var fullName = ""
     @State private var ageString = ""
     @State private var heightString = ""
@@ -25,7 +24,6 @@ struct ElderlySetupView: View {
     var body: some View {
         NavigationStack {
             VStack(spacing: 24) {
-                // Progress Indicator
                 HStack {
                     ForEach(1...3, id: \.self) { i in
                         Circle()
@@ -64,7 +62,6 @@ struct ElderlySetupView: View {
     }
     
     var step1View: some View {
-        // Menggunakan ScrollView agar form panjang tidak terpotong di layar kecil
         ScrollView(showsIndicators: false) {
             VStack(spacing: 20) {
                 Text("Elderly Profile")
@@ -77,7 +74,6 @@ struct ElderlySetupView: View {
                     HStack(spacing: 16) {
                         InputField(placeholder: "Age", text: $ageString)
                         
-                        // Menu Dropdown untuk Blood Type
                         Menu {
                             ForEach(bloodTypes, id: \.self) { type in
                                 Button(type) {
@@ -144,7 +140,7 @@ struct ElderlySetupView: View {
                 .disabled(!isFormValid)
                 .padding(.top, 16)
             }
-            .padding(.bottom, 20) // Memberikan sedikit ruang di bawah saat di-scroll penuh
+            .padding(.bottom, 20)
         }
     }
     
@@ -174,8 +170,6 @@ struct ElderlySetupView: View {
             
             Button(action: {
                 guard let uid = authViewModel.currentUser?.id, let age = Int(ageString) else { return }
-                
-                // Konversi String ke Double untuk menyamakan tipe data di model
                 let parsedHeight = Double(heightString)
                 let parsedWeight = Double(weightString)
                 

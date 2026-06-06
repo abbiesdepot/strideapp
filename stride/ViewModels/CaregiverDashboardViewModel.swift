@@ -14,7 +14,6 @@ class CaregiverDashboardViewModel: ObservableObject {
     
     func fetchDashboardData(caregiverID: String) {
         isLoading = true
-        // Fetch Family document where caregiverID matches
         db.collection("family")
             .whereField("caregiverID", isEqualTo: caregiverID)
             .getDocuments { [weak self] snapshot, error in
@@ -70,7 +69,6 @@ class CaregiverDashboardViewModel: ObservableObject {
             }
     }
     
-    // MARK: - Updated Function with New Parameters
     func createElderlyProfile(caregiverID: String, fullName: String, age: Int, height: Double?, weight: Double?, bloodType: String?, medicalNotes: String, notes: String?, completion: @escaping (Bool) -> Void) {
         isLoading = true
         

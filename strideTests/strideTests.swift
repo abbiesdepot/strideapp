@@ -1,19 +1,12 @@
-//
-//  strideTests.swift
-//  strideTests
-//
-
 import XCTest
 @testable import stride
 import FirebaseCore
 
 final class strideTests: XCTestCase {
     
-    // 1. Change this to an async setup hook!
     override func setUp() async throws {
         try await super.setUp()
         
-        // Only configure if an instance doesn't exist yet
         if FirebaseApp.app() == nil {
             let options = FirebaseOptions(googleAppID: "1:1234567890:ios:1234567890", gcmSenderID: "1234567890")
             options.apiKey = "MockAPIKeyForTesting"
@@ -23,8 +16,6 @@ final class strideTests: XCTestCase {
             print("Stride Test Runner: Firebase configured.")
         }
         
-        // 2. The Golden Solution: Force the CPU to wait 0.1 seconds
-        // This gives Firebase time to fully sit in memory before tests run!
         try await Task.sleep(nanoseconds: 100_000_000) // 0.1 seconds
     }
     

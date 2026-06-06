@@ -1,10 +1,3 @@
-//
-//  Theme.swift
-//  stride
-//
-//  Created by abbie on 03/06/26.
-//
-
 import SwiftUI
 
 extension Color {

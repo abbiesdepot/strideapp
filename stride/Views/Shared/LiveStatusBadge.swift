@@ -26,7 +26,7 @@ struct LiveStatusBadge: View {
             Circle()
                 .fill(color)
                 .frame(width: 8, height: 8)
-                // Pulse animation can be added here if needed
+                // pulse animation can be added here if needed
                 
             Text(text)
                 .font(.system(size: 14, weight: .semibold, design: .default))

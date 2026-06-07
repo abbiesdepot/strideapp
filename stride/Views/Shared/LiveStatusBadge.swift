@@ -1,18 +1,18 @@
 import SwiftUI
 
 struct LiveStatusBadge: View {
-    let status: String
+    let status: String // "green", "yellow", "red"
     
-    var color: Color {
+    var statusColor: Color {
         switch status.lowercased() {
-        case "green": return .strideGreen
-        case "yellow": return .strideYellow
-        case "red": return .strideRed
-        default: return .strideNeutral
+        case "green": return Color.green
+        case "yellow": return Color.yellow
+        case "red": return Color.red
+        default: return Color.gray
         }
     }
     
-    var text: String {
+    var statusText: String {
         switch status.lowercased() {
         case "green": return "Normal"
         case "yellow": return "Warning"
@@ -24,25 +24,16 @@ struct LiveStatusBadge: View {
     var body: some View {
         HStack(spacing: 6) {
             Circle()
-                .fill(color)
+                .fill(statusColor)
                 .frame(width: 8, height: 8)
-                // Pulse animation can be added here if needed
-                
-            Text(text)
-                .font(.system(size: 14, weight: .semibold, design: .default))
-                .foregroundColor(color)
+            
+            Text(statusText)
+                .font(.system(size: 14, weight: .bold))
+                .foregroundColor(statusColor)
         }
-        .padding(.horizontal, 10)
-        .padding(.vertical, 4)
-        .background(color.opacity(0.15))
-        .cornerRadius(12)
-    }
-}
-
-#Preview {
-    VStack(spacing: 16) {
-        LiveStatusBadge(status: "green")
-        LiveStatusBadge(status: "yellow")
-        LiveStatusBadge(status: "red")
+        .padding(.horizontal, 12)
+        .padding(.vertical, 6)
+        .background(statusColor.opacity(0.15))
+        .cornerRadius(20)
     }
 }

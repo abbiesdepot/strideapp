@@ -2,6 +2,9 @@ import SwiftUI
 
 struct FamilyMainView: View {
     @EnvironmentObject var authViewModel: AuthViewModel
+    // Kita asumsikan kamu bisa menyimpan familyID user di sini atau di ViewModel
+    // Untuk keperluan presentasi, kita set dummy string dulu jika belum terhubung
+    @AppStorage("userFamilyID") var userFamilyID: String = "fam123"
     
     var body: some View {
         TabView {
@@ -10,15 +13,13 @@ struct FamilyMainView: View {
                     Label("Home", systemImage: "house.fill")
                 }
             
-            // Reusing Caregiver AlertCenterView since logic is basically the same,
-            // we just need to disable the resolve button for family members.
-            // But since the alertVM logic needs the familyID, we can adapt it or create a specific one.
-            // For now, let's just show an empty placeholder or basic view.
-            Text("Alerts")
+            // Memanggil halaman Alerts yang baru dibuat
+            FamilyAlertsView(familyID: userFamilyID)
                 .tabItem {
                     Label("Alerts", systemImage: "bell.fill")
                 }
             
+            // Profile Tab
             VStack {
                 Text(authViewModel.currentUser?.fullName ?? "Family Member")
                     .font(.title)
@@ -37,9 +38,4 @@ struct FamilyMainView: View {
         }
         .tint(.stridePrimary)
     }
-}
-
-#Preview {
-    FamilyMainView()
-        .environmentObject(AuthViewModel())
 }

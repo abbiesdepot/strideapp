@@ -48,24 +48,49 @@ final class strideTests: XCTestCase {
         XCTAssertTrue(med.isEnabled)
     }
     
+    @MainActor
+    func testAuthViewModelInitialState() throws {
+        let viewModel = AuthViewModel()
+        
+        XCTAssertFalse(viewModel.isAuthenticated)
+        XCTAssertFalse(viewModel.isLoading)
+        XCTAssertNil(viewModel.currentUser)
+        XCTAssertNil(viewModel.errorMessage)
+    }
+    
+    @MainActor
+    func testFamilyDashboardInitialState() throws {
+        let viewModel = FamilyDashboardViewModel()
+        
+        XCTAssertTrue(viewModel.elderlyProfiles.isEmpty)
+        XCTAssertFalse(viewModel.isLoading)
+        XCTAssertNil(viewModel.errorMessage)
+    }
+    
 //    @MainActor
-//    func testAuthViewModelInitialState() throws {
-//        let viewModel = AuthViewModel()
-//        
-//        XCTAssertFalse(viewModel.isAuthenticated)
-//        XCTAssertFalse(viewModel.isLoading)
-//        XCTAssertNil(viewModel.currentUser)
-//        XCTAssertNil(viewModel.errorMessage)
-//    }
-//    
-//    @MainActor
-//    func testFamilyDashboardInitialState() throws {
-//        let viewModel = FamilyDashboardViewModel()
-//        
-//        XCTAssertTrue(viewModel.elderlyProfiles.isEmpty)
-//        XCTAssertFalse(viewModel.isLoading)
-//        XCTAssertNil(viewModel.errorMessage)
-//    }
+//        func testFamilyDashboardFetch_ShouldSetIsLoading() throws {
+//            let viewModel = FamilyDashboardViewModel()
+//            
+//            // Ketika memanggil fungsi fetch, pastikan loading state-nya aktif
+//            viewModel.fetchElderlyProfiles(userID: "user_test_123")
+//            
+//            XCTAssertTrue(viewModel.isLoading, "Harusnya isLoading bernilai true saat proses fetch dimulai.")
+//        }
+        
+        @MainActor
+        func testJoinCareCircle_WithEmptyCode_ShouldReturnError() {
+            let viewModel = FamilyDashboardViewModel()
+            let expectation = expectation(description: "Completion handler dipanggil")
+            
+            // Menguji validasi bisnis: kode undangan tidak boleh kosong
+            viewModel.joinCareCircle(inviteCode: "", userID: "user_test_123") { success, errorMessage in
+                XCTAssertFalse(success, "Harusnya gagal jika invite code kosong")
+                XCTAssertNotNil(errorMessage, "Harus mengembalikan pesan error")
+                expectation.fulfill()
+            }
+            
+            wait(for: [expectation], timeout: 2.0)
+        }
     
     @MainActor
     func testCaregiverDashboardInitialState() throws {
@@ -75,5 +100,7 @@ final class strideTests: XCTestCase {
         XCTAssertNil(viewModel.family)
         XCTAssertFalse(viewModel.isLoading)
     }
+    
+    
 }
 

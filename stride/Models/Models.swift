@@ -25,6 +25,12 @@ struct ElderlyProfile: Codable, Identifiable {
     var familyID: String?
     var stepCount: Int
     var distanceKM: Double
+    var heartRate: Int?
+    var stressPercentage: Int?
+    var sleepAwakeMin: Int?
+    var sleepREMMin: Int?
+    var sleepCoreMin: Int?
+    var sleepDeepMin: Int?
     var liveStatus: String // "green", "yellow", "red"
     var liveStatusReason: String
     var createdAt: Date?

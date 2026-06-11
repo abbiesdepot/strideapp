@@ -84,6 +84,12 @@ class CaregiverDashboardViewModel: ObservableObject {
             familyID: nil, // bakal be set after Family creation
             stepCount: 0,
             distanceKM: 0.0,
+            heartRate: nil,
+            stressPercentage: nil,
+            sleepAwakeMin: nil,
+            sleepREMMin: nil,
+            sleepCoreMin: nil,
+            sleepDeepMin: nil,
             liveStatus: "green",
             liveStatusReason: "Setup complete",
             createdAt: Date()

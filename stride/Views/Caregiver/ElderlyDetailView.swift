@@ -147,7 +147,7 @@ struct ElderlyDetailView: View {
                     Spacer()
                     ProfileStatItem(icon: "map", value: String(format: "%.1f km", profile.distanceKM), label: "Distance")
                     Spacer()
-                    ProfileStatItem(icon: "heart.fill", value: "72 bpm", label: "Heart Rate")
+                    ProfileStatItem(icon: "heart.fill", value: profile.heartRate != nil ? "\(profile.heartRate!) bpm" : "—", label: "Heart Rate")
                 }
                 .padding(20)
                 .background(Color.strideCardWhite)
@@ -326,6 +326,12 @@ private struct EditProfileSheet: View {
     @State private var bloodType: String
     @State private var medicalNotes: String
     @State private var notes: String
+    @State private var heartRateStr: String
+    @State private var stressPercentageStr: String
+    @State private var sleepAwakeMinStr: String
+    @State private var sleepREMMinStr: String
+    @State private var sleepCoreMinStr: String
+    @State private var sleepDeepMinStr: String
     @State private var isSaving = false
 
     init(elderlyID: String, profile: ElderlyProfile, onSave: @escaping (ElderlyProfile) -> Void) {
@@ -339,6 +345,12 @@ private struct EditProfileSheet: View {
         _bloodType = State(initialValue: profile.bloodType ?? "")
         _medicalNotes = State(initialValue: profile.medicalNotes ?? "")
         _notes = State(initialValue: profile.notes ?? "")
+        _heartRateStr = State(initialValue: profile.heartRate != nil ? "\(profile.heartRate!)" : "")
+        _stressPercentageStr = State(initialValue: profile.stressPercentage != nil ? "\(profile.stressPercentage!)" : "")
+        _sleepAwakeMinStr = State(initialValue: profile.sleepAwakeMin != nil ? "\(profile.sleepAwakeMin!)" : "")
+        _sleepREMMinStr = State(initialValue: profile.sleepREMMin != nil ? "\(profile.sleepREMMin!)" : "")
+        _sleepCoreMinStr = State(initialValue: profile.sleepCoreMin != nil ? "\(profile.sleepCoreMin!)" : "")
+        _sleepDeepMinStr = State(initialValue: profile.sleepDeepMin != nil ? "\(profile.sleepDeepMin!)" : "")
     }
 
     var body: some View {
@@ -355,6 +367,20 @@ private struct EditProfileSheet: View {
                     TextField("Weight (kg)", text: $weightStr)
                         .keyboardType(.decimalPad)
                     TextField("Blood Type", text: $bloodType)
+                }
+                Section(header: Text("Health Metrics")) {
+                    TextField("Heart Rate (BPM)", text: $heartRateStr)
+                        .keyboardType(.numberPad)
+                    TextField("Stress (%)", text: $stressPercentageStr)
+                        .keyboardType(.numberPad)
+                    TextField("Sleep Awake (min)", text: $sleepAwakeMinStr)
+                        .keyboardType(.numberPad)
+                    TextField("Sleep REM (min)", text: $sleepREMMinStr)
+                        .keyboardType(.numberPad)
+                    TextField("Sleep Core (min)", text: $sleepCoreMinStr)
+                        .keyboardType(.numberPad)
+                    TextField("Sleep Deep (min)", text: $sleepDeepMinStr)
+                        .keyboardType(.numberPad)
                 }
                 Section(header: Text("Notes")) {
                     TextField("Medical Notes", text: $medicalNotes, axis: .vertical)
@@ -396,6 +422,37 @@ private struct EditProfileSheet: View {
         if let w = Double(weightStr) {
             data["weight"] = w
         }
+        
+        if let hr = Int(heartRateStr) {
+            data["heartRate"] = hr
+        } else {
+            data["heartRate"] = FieldValue.delete()
+        }
+        if let stress = Int(stressPercentageStr) {
+            data["stressPercentage"] = stress
+        } else {
+            data["stressPercentage"] = FieldValue.delete()
+        }
+        if let awake = Int(sleepAwakeMinStr) {
+            data["sleepAwakeMin"] = awake
+        } else {
+            data["sleepAwakeMin"] = FieldValue.delete()
+        }
+        if let rem = Int(sleepREMMinStr) {
+            data["sleepREMMin"] = rem
+        } else {
+            data["sleepREMMin"] = FieldValue.delete()
+        }
+        if let core = Int(sleepCoreMinStr) {
+            data["sleepCoreMin"] = core
+        } else {
+            data["sleepCoreMin"] = FieldValue.delete()
+        }
+        if let deep = Int(sleepDeepMinStr) {
+            data["sleepDeepMin"] = deep
+        } else {
+            data["sleepDeepMin"] = FieldValue.delete()
+        }
 
         Firestore.firestore().collection("elderlyProfiles").document(elderlyID).updateData(data) { _ in
             isSaving = false
@@ -407,6 +464,12 @@ private struct EditProfileSheet: View {
             updated.bloodType = bloodType.isEmpty ? nil : bloodType
             updated.medicalNotes = medicalNotes.isEmpty ? nil : medicalNotes
             updated.notes = notes.isEmpty ? nil : notes
+            updated.heartRate = Int(heartRateStr)
+            updated.stressPercentage = Int(stressPercentageStr)
+            updated.sleepAwakeMin = Int(sleepAwakeMinStr)
+            updated.sleepREMMin = Int(sleepREMMinStr)
+            updated.sleepCoreMin = Int(sleepCoreMinStr)
+            updated.sleepDeepMin = Int(sleepDeepMinStr)
             onSave(updated)
             dismiss()
         }

@@ -79,7 +79,7 @@ class DailyReportViewModel: ObservableObject {
         }
     }
     
-    private func calculateVitalsAverages() {
+    func calculateVitalsAverages() {
         guard !vitalSigns.isEmpty else {
             averageHeartRate = 0
             averageSpO2 = 0
@@ -93,7 +93,7 @@ class DailyReportViewModel: ObservableObject {
         averageSpO2 = spo2Sum / Double(vitalSigns.count)
     }
     
-    private func calculateActivityAverages() {
+    func calculateActivityAverages() {
         guard !activityLogs.isEmpty else {
             averageSteps = 0
             averageDistance = 0
@@ -111,7 +111,7 @@ class DailyReportViewModel: ObservableObject {
         averageIdleMinutes = idleSum / Double(activityLogs.count)
     }
     
-    private func calculateMedicationCompliance() {
+    func calculateMedicationCompliance() {
         guard !medicationLogs.isEmpty else {
             medicationCompliance = 0
             return

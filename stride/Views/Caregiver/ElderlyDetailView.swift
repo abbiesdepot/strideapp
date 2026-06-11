@@ -6,21 +6,7 @@ struct ElderlyDetailView: View {
 
     @State private var profile: ElderlyProfile?
     @State private var isLoadingProfile = true
-
     @State private var selectedTab = 0
-    @State private var showEditSheet = false
-
-    @StateObject private var medVM = MedicationViewModel()
-    @State private var showAddMedSheet = false
-    @State private var selectedMedication: Medication? = nil
-    @State private var showDeleteConfirmAlert = false
-    @State private var medicationToDelete: Medication? = nil
-
-    @StateObject private var activityVM = ActivityViewModel()
-    @State private var showAddActivitySheet = false
-    @State private var selectedActivity: CareActivity? = nil
-    @State private var showDeleteActivityAlert = false
-    @State private var activityToDelete: CareActivity? = nil
 
     var body: some View {
         VStack(spacing: 0) {
@@ -39,15 +25,15 @@ struct ElderlyDetailView: View {
                 Spacer()
                 ProgressView()
                 Spacer()
-            } else if let profile = profile {
+            } else if let profileBinding = Binding($profile) {
                 if selectedTab == 0 {
-                    overviewTab(profile: profile)
+                    ElderlyOverviewTab(elderlyID: elderlyID, profile: profileBinding)
                 } else if selectedTab == 1 {
-                    medicationsTab
+                    ElderlyMedicationsTab(elderlyID: elderlyID)
                 } else if selectedTab == 2 {
-                    activitiesTab
+                    ElderlyActivitiesTab(elderlyID: elderlyID)
                 } else {
-                    historyTab
+                    WeeklyHealthTrendView(elderlyID: elderlyID)
                 }
             } else {
                 Spacer()
@@ -59,80 +45,8 @@ struct ElderlyDetailView: View {
         .background(Color.strideBackground.ignoresSafeArea())
         .navigationTitle("Profile Details")
         .navigationBarTitleDisplayMode(.inline)
-        .toolbar {
-            if selectedTab == 0 {
-                ToolbarItem(placement: .navigationBarTrailing) {
-                    Button(action: { showEditSheet = true }) {
-                        Image(systemName: "pencil")
-                    }
-                }
-            } else if selectedTab == 1 {
-                ToolbarItem(placement: .navigationBarTrailing) {
-                    Button(action: { showAddMedSheet = true }) {
-                        Image(systemName: "plus")
-                            .fontWeight(.bold)
-                    }
-                }
-            } else if selectedTab == 2 {
-                ToolbarItem(placement: .navigationBarTrailing) {
-                    Button(action: { showAddActivitySheet = true }) {
-                        Image(systemName: "plus")
-                            .fontWeight(.bold)
-                    }
-                }
-            }
-        }
         .task {
             await loadProfile()
-        }
-        .onAppear {
-            medVM.fetchMedications(elderlyID: elderlyID)
-            activityVM.fetchActivities(elderlyID: elderlyID)
-        }
-        .sheet(isPresented: $showEditSheet) {
-            if let profile = profile {
-                EditProfileSheet(elderlyID: elderlyID, profile: profile) { updated in
-                    self.profile = updated
-                }
-            }
-        }
-        .sheet(isPresented: $showAddMedSheet) {
-            AddMedicationSheet(elderlyID: elderlyID, medVM: medVM)
-        }
-        .sheet(item: $selectedMedication) { med in
-            EditMedicationSheet(medication: med, medVM: medVM)
-        }
-        .sheet(isPresented: $showAddActivitySheet) {
-            AddActivitySheet(elderlyID: elderlyID, activityVM: activityVM)
-        }
-        .sheet(item: $selectedActivity) { act in
-            EditActivitySheet(activity: act, activityVM: activityVM)
-        }
-        .alert("Delete Medication?", isPresented: $showDeleteConfirmAlert) {
-            Button("Delete", role: .destructive) {
-                if let med = medicationToDelete, let id = med.id {
-                    medVM.deleteMedication(medicationID: id)
-                }
-                medicationToDelete = nil
-            }
-            Button("Cancel", role: .cancel) {
-                medicationToDelete = nil
-            }
-        } message: {
-            Text("This action cannot be undone.")
-        }
-        .alert("Delete Activity?", isPresented: $showDeleteActivityAlert) {
-            Button("Delete", role: .destructive) {
-                if let act = activityToDelete, let id = act.id {
-                    activityVM.deleteActivity(activityID: id)
-                }
-                activityToDelete = nil
-            }
-            Button("Cancel", role: .cancel) {
-                activityToDelete = nil
-            }
-        } message: {
-            Text("This action cannot be undone.")
         }
     }
 
@@ -149,13 +63,18 @@ struct ElderlyDetailView: View {
         }
         isLoadingProfile = false
     }
+}
 
+// MARK: - Subviews & Sheets (Dalam 1 File untuk meminimalkan beban kompilasi)
 
-    @ViewBuilder
-    private func overviewTab(profile: ElderlyProfile) -> some View {
+struct ElderlyOverviewTab: View {
+    let elderlyID: String
+    @Binding var profile: ElderlyProfile
+    @State private var showEditSheet = false
+
+    var body: some View {
         ScrollView {
             VStack(spacing: 24) {
-
                 VStack(spacing: 12) {
                     Circle()
                         .fill(Color.strideTertiary.opacity(0.3))
@@ -258,103 +177,192 @@ struct ElderlyDetailView: View {
             }
         }
         .background(Color.strideBackground.ignoresSafeArea())
-    }
-
-    @ViewBuilder
-    private var medicationsTab: some View {
-        if medVM.isLoading {
-            Spacer()
-            ProgressView()
-            Spacer()
-        } else if medVM.medications.isEmpty {
-            Spacer()
-            VStack(spacing: 16) {
-                Image(systemName: "pills")
-                    .font(.system(size: 60))
-                    .foregroundColor(.strideSecondary)
-                Text("No Medications")
-                    .font(.system(size: 20, weight: .bold))
-                    .foregroundColor(.stridePrimary)
-                Text("Tap + to add a medication.")
-                    .foregroundColor(.strideTextSecondary)
+        .sheet(isPresented: $showEditSheet) {
+            EditProfileSheet(elderlyID: elderlyID, profile: profile) { updated in
+                self.profile = updated
             }
-            Spacer()
-        } else {
-            List {
-                ForEach(medVM.medications) { med in
-                    Button(action: { selectedMedication = med }) {
-                        MedicationRow(medication: med)
-                    }
-                    .buttonStyle(.plain)
-                    .swipeActions(edge: .trailing) {
-                        Button(role: .destructive) {
-                            medicationToDelete = med
-                            showDeleteConfirmAlert = true
-                        } label: {
-                            Label("Delete", systemImage: "trash")
-                        }
-                    }
-                    .listRowBackground(Color.strideBackground)
-                    .listRowSeparator(.hidden)
-                    .listRowInsets(EdgeInsets(top: 6, leading: 20, bottom: 6, trailing: 20))
+        }
+        .toolbar {
+            ToolbarItem(placement: .navigationBarTrailing) {
+                Button(action: { showEditSheet = true }) {
+                    Image(systemName: "pencil")
                 }
             }
-            .listStyle(.plain)
-            .background(Color.strideBackground)
         }
-    }
-
-    @ViewBuilder
-    private var activitiesTab: some View {
-        if activityVM.isLoading {
-            Spacer()
-            ProgressView()
-            Spacer()
-        } else if activityVM.activities.isEmpty {
-            Spacer()
-            VStack(spacing: 16) {
-                Image(systemName: "figure.run")
-                    .font(.system(size: 60))
-                    .foregroundColor(.strideSecondary)
-                Text("No Activities")
-                    .font(.system(size: 20, weight: .bold))
-                    .foregroundColor(.stridePrimary)
-                Text("Tap + to add an activity.")
-                    .foregroundColor(.strideTextSecondary)
-            }
-            Spacer()
-        } else {
-            List {
-                ForEach(activityVM.activities) { act in
-                    Button(action: { selectedActivity = act }) {
-                        ActivityRow(activity: act)
-                    }
-                    .buttonStyle(.plain)
-                    .swipeActions(edge: .trailing) {
-                        Button(role: .destructive) {
-                            activityToDelete = act
-                            showDeleteActivityAlert = true
-                        } label: {
-                            Label("Delete", systemImage: "trash")
-                        }
-                    }
-                    .listRowBackground(Color.strideBackground)
-                    .listRowSeparator(.hidden)
-                    .listRowInsets(EdgeInsets(top: 6, leading: 20, bottom: 6, trailing: 20))
-                }
-            }
-            .listStyle(.plain)
-            .background(Color.strideBackground)
-        }
-    }
-
-    @ViewBuilder
-    private var historyTab: some View {
-        WeeklyHealthTrendView(elderlyID: elderlyID)
     }
 }
 
-private struct MedicationRow: View {
+struct ElderlyMedicationsTab: View {
+    let elderlyID: String
+    
+    @StateObject private var medVM = MedicationViewModel()
+    @State private var showAddMedSheet = false
+    @State private var selectedMedication: Medication? = nil
+    @State private var showDeleteConfirmAlert = false
+    @State private var medicationToDelete: Medication? = nil
+
+    var body: some View {
+        Group {
+            if medVM.isLoading {
+                Spacer()
+                ProgressView()
+                Spacer()
+            } else if medVM.medications.isEmpty {
+                Spacer()
+                VStack(spacing: 16) {
+                    Image(systemName: "pills")
+                        .font(.system(size: 60))
+                        .foregroundColor(.strideSecondary)
+                    Text("No Medications")
+                        .font(.system(size: 20, weight: .bold))
+                        .foregroundColor(.stridePrimary)
+                    Text("Tap + to add a medication.")
+                        .foregroundColor(.strideTextSecondary)
+                }
+                Spacer()
+            } else {
+                List {
+                    ForEach(medVM.medications) { med in
+                        Button(action: { selectedMedication = med }) {
+                            MedicationRow(medication: med)
+                        }
+                        .buttonStyle(.plain)
+                        .swipeActions(edge: .trailing) {
+                            Button(role: .destructive) {
+                                medicationToDelete = med
+                                showDeleteConfirmAlert = true
+                            } label: {
+                                Label("Delete", systemImage: "trash")
+                            }
+                        }
+                        .listRowBackground(Color.strideBackground)
+                        .listRowSeparator(.hidden)
+                        .listRowInsets(EdgeInsets(top: 6, leading: 20, bottom: 6, trailing: 20))
+                    }
+                }
+                .listStyle(.plain)
+                .background(Color.strideBackground)
+            }
+        }
+        .onAppear {
+            medVM.fetchMedications(elderlyID: elderlyID)
+        }
+        .sheet(isPresented: $showAddMedSheet) {
+            AddMedicationSheet(elderlyID: elderlyID, medVM: medVM)
+        }
+        .sheet(item: $selectedMedication) { med in
+            EditMedicationSheet(medication: med, medVM: medVM)
+        }
+        .alert("Delete Medication?", isPresented: $showDeleteConfirmAlert) {
+            Button("Delete", role: .destructive) {
+                if let med = medicationToDelete, let id = med.id {
+                    medVM.deleteMedication(medicationID: id)
+                }
+                medicationToDelete = nil
+            }
+            Button("Cancel", role: .cancel) {
+                medicationToDelete = nil
+            }
+        } message: {
+            Text("This action cannot be undone.")
+        }
+        .toolbar {
+            ToolbarItem(placement: .navigationBarTrailing) {
+                Button(action: { showAddMedSheet = true }) {
+                    Image(systemName: "plus")
+                        .fontWeight(.bold)
+                }
+            }
+        }
+    }
+}
+
+struct ElderlyActivitiesTab: View {
+    let elderlyID: String
+    
+    @StateObject private var activityVM = ActivityViewModel()
+    @State private var showAddActivitySheet = false
+    @State private var selectedActivity: CareActivity? = nil
+    @State private var showDeleteActivityAlert = false
+    @State private var activityToDelete: CareActivity? = nil
+
+    var body: some View {
+        Group {
+            if activityVM.isLoading {
+                Spacer()
+                ProgressView()
+                Spacer()
+            } else if activityVM.activities.isEmpty {
+                Spacer()
+                VStack(spacing: 16) {
+                    Image(systemName: "figure.run")
+                        .font(.system(size: 60))
+                        .foregroundColor(.strideSecondary)
+                    Text("No Activities")
+                        .font(.system(size: 20, weight: .bold))
+                        .foregroundColor(.stridePrimary)
+                    Text("Tap + to add an activity.")
+                        .foregroundColor(.strideTextSecondary)
+                }
+                Spacer()
+            } else {
+                List {
+                    ForEach(activityVM.activities) { act in
+                        Button(action: { selectedActivity = act }) {
+                            ActivityRow(activity: act)
+                        }
+                        .buttonStyle(.plain)
+                        .swipeActions(edge: .trailing) {
+                            Button(role: .destructive) {
+                                activityToDelete = act
+                                showDeleteActivityAlert = true
+                            } label: {
+                                Label("Delete", systemImage: "trash")
+                            }
+                        }
+                        .listRowBackground(Color.strideBackground)
+                        .listRowSeparator(.hidden)
+                        .listRowInsets(EdgeInsets(top: 6, leading: 20, bottom: 6, trailing: 20))
+                    }
+                }
+                .listStyle(.plain)
+                .background(Color.strideBackground)
+            }
+        }
+        .onAppear {
+            activityVM.fetchActivities(elderlyID: elderlyID)
+        }
+        .sheet(isPresented: $showAddActivitySheet) {
+            AddActivitySheet(elderlyID: elderlyID, activityVM: activityVM)
+        }
+        .sheet(item: $selectedActivity) { act in
+            EditActivitySheet(activity: act, activityVM: activityVM)
+        }
+        .alert("Delete Activity?", isPresented: $showDeleteActivityAlert) {
+            Button("Delete", role: .destructive) {
+                if let act = activityToDelete, let id = act.id {
+                    activityVM.deleteActivity(activityID: id)
+                }
+                activityToDelete = nil
+            }
+            Button("Cancel", role: .cancel) {
+                activityToDelete = nil
+            }
+        } message: {
+            Text("This action cannot be undone.")
+        }
+        .toolbar {
+            ToolbarItem(placement: .navigationBarTrailing) {
+                Button(action: { showAddActivitySheet = true }) {
+                    Image(systemName: "plus")
+                        .fontWeight(.bold)
+                }
+            }
+        }
+    }
+}
+
+struct MedicationRow: View {
     let medication: Medication
 
     var body: some View {
@@ -392,7 +400,117 @@ private struct MedicationRow: View {
     }
 }
 
-private struct EditProfileSheet: View {
+struct ActivityRow: View {
+    let activity: CareActivity
+
+    var body: some View {
+        HStack(spacing: 12) {
+            ZStack {
+                Circle()
+                    .fill(Color.strideSecondary.opacity(0.15))
+                    .frame(width: 44, height: 44)
+                Image(systemName: "figure.run")
+                    .font(.system(size: 20))
+                    .foregroundColor(.strideSecondary)
+            }
+            VStack(alignment: .leading, spacing: 4) {
+                Text(activity.name)
+                    .font(.system(size: 16, weight: .semibold))
+                    .foregroundColor(.stridePrimary)
+                Text(activity.frequency)
+                    .font(.system(size: 14))
+                    .foregroundColor(.strideTextSecondary)
+            }
+            Spacer()
+            VStack(alignment: .trailing, spacing: 4) {
+                Text(activity.scheduleTime)
+                    .font(.system(size: 14, weight: .medium))
+                    .foregroundColor(.strideSecondary)
+            }
+        }
+        .padding(14)
+        .background(Color.strideCardWhite)
+        .cornerRadius(StrideTheme.cornerRadiusCard)
+        .shadow(color: StrideTheme.shadowColor, radius: StrideTheme.shadowRadius, x: 0, y: 2)
+    }
+}
+
+struct ProfileStatItem: View {
+    let icon: String
+    let value: String
+    let label: String
+
+    var body: some View {
+        VStack(spacing: 6) {
+            Image(systemName: icon)
+                .font(.system(size: 22))
+                .foregroundColor(.strideSecondary)
+            Text(value)
+                .font(.system(size: 16, weight: .bold))
+                .foregroundColor(.strideTextPrimary)
+            Text(label)
+                .font(.system(size: 12))
+                .foregroundColor(.strideTextSecondary)
+        }
+        .frame(maxWidth: .infinity)
+    }
+}
+
+struct InfoTile: View {
+    let icon: String
+    let iconColor: Color
+    let label: String
+    let value: String
+
+    var body: some View {
+        VStack(spacing: 8) {
+            Image(systemName: icon)
+                .font(.system(size: 22))
+                .foregroundColor(iconColor)
+            Text(value)
+                .font(.system(size: 16, weight: .bold))
+                .foregroundColor(.strideTextPrimary)
+            Text(label)
+                .font(.system(size: 12))
+                .foregroundColor(.strideTextSecondary)
+        }
+        .frame(maxWidth: .infinity)
+        .padding(.vertical, 16)
+        .background(Color.strideCardWhite)
+        .cornerRadius(StrideTheme.cornerRadiusCard)
+        .shadow(color: StrideTheme.shadowColor, radius: StrideTheme.shadowRadius, x: 0, y: 4)
+    }
+}
+
+struct NoteCard: View {
+    let icon: String
+    let iconColor: Color
+    let title: String
+    let content: String
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            HStack {
+                Image(systemName: icon)
+                    .foregroundColor(iconColor)
+                Text(title)
+                    .font(.system(size: 16, weight: .bold))
+                    .foregroundColor(.strideTextPrimary)
+                Spacer()
+            }
+            Text(content)
+                .font(.system(size: 14))
+                .foregroundColor(.strideTextSecondary)
+                .fixedSize(horizontal: false, vertical: true)
+        }
+        .padding(16)
+        .background(Color.strideCardWhite)
+        .cornerRadius(StrideTheme.cornerRadiusCard)
+        .shadow(color: StrideTheme.shadowColor, radius: StrideTheme.shadowRadius, x: 0, y: 4)
+    }
+}
+
+struct EditProfileSheet: View {
     let elderlyID: String
     let profile: ElderlyProfile
     let onSave: (ElderlyProfile) -> Void
@@ -556,7 +674,7 @@ private struct EditProfileSheet: View {
     }
 }
 
-private struct AddMedicationSheet: View {
+struct AddMedicationSheet: View {
     let elderlyID: String
     let medVM: MedicationViewModel
 
@@ -610,7 +728,7 @@ private struct AddMedicationSheet: View {
     }
 }
 
-private struct EditMedicationSheet: View {
+struct EditMedicationSheet: View {
     let medication: Medication
     let medVM: MedicationViewModel
 
@@ -683,117 +801,7 @@ private struct EditMedicationSheet: View {
     }
 }
 
-private struct ProfileStatItem: View {
-    let icon: String
-    let value: String
-    let label: String
-
-    var body: some View {
-        VStack(spacing: 6) {
-            Image(systemName: icon)
-                .font(.system(size: 22))
-                .foregroundColor(.strideSecondary)
-            Text(value)
-                .font(.system(size: 16, weight: .bold))
-                .foregroundColor(.strideTextPrimary)
-            Text(label)
-                .font(.system(size: 12))
-                .foregroundColor(.strideTextSecondary)
-        }
-        .frame(maxWidth: .infinity)
-    }
-}
-
-private struct InfoTile: View {
-    let icon: String
-    let iconColor: Color
-    let label: String
-    let value: String
-
-    var body: some View {
-        VStack(spacing: 8) {
-            Image(systemName: icon)
-                .font(.system(size: 22))
-                .foregroundColor(iconColor)
-            Text(value)
-                .font(.system(size: 16, weight: .bold))
-                .foregroundColor(.strideTextPrimary)
-            Text(label)
-                .font(.system(size: 12))
-                .foregroundColor(.strideTextSecondary)
-        }
-        .frame(maxWidth: .infinity)
-        .padding(.vertical, 16)
-        .background(Color.strideCardWhite)
-        .cornerRadius(StrideTheme.cornerRadiusCard)
-        .shadow(color: StrideTheme.shadowColor, radius: StrideTheme.shadowRadius, x: 0, y: 4)
-    }
-}
-
-private struct NoteCard: View {
-    let icon: String
-    let iconColor: Color
-    let title: String
-    let content: String
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            HStack {
-                Image(systemName: icon)
-                    .foregroundColor(iconColor)
-                Text(title)
-                    .font(.system(size: 16, weight: .bold))
-                    .foregroundColor(.strideTextPrimary)
-                Spacer()
-            }
-            Text(content)
-                .font(.system(size: 14))
-                .foregroundColor(.strideTextSecondary)
-                .fixedSize(horizontal: false, vertical: true)
-        }
-        .padding(16)
-        .background(Color.strideCardWhite)
-        .cornerRadius(StrideTheme.cornerRadiusCard)
-        .shadow(color: StrideTheme.shadowColor, radius: StrideTheme.shadowRadius, x: 0, y: 4)
-    }
-}
-
-private struct ActivityRow: View {
-    let activity: CareActivity
-
-    var body: some View {
-        HStack(spacing: 12) {
-            ZStack {
-                Circle()
-                    .fill(Color.strideSecondary.opacity(0.15))
-                    .frame(width: 44, height: 44)
-                Image(systemName: "figure.run")
-                    .font(.system(size: 20))
-                    .foregroundColor(.strideSecondary)
-            }
-            VStack(alignment: .leading, spacing: 4) {
-                Text(activity.name)
-                    .font(.system(size: 16, weight: .semibold))
-                    .foregroundColor(.stridePrimary)
-                Text(activity.frequency)
-                    .font(.system(size: 14))
-                    .foregroundColor(.strideTextSecondary)
-            }
-            Spacer()
-            VStack(alignment: .trailing, spacing: 4) {
-                Text(activity.scheduleTime)
-                    .font(.system(size: 14, weight: .medium))
-                    .foregroundColor(.strideSecondary)
-            }
-        }
-        .padding(14)
-        .background(Color.strideCardWhite)
-        .cornerRadius(StrideTheme.cornerRadiusCard)
-        .shadow(color: StrideTheme.shadowColor, radius: StrideTheme.shadowRadius, x: 0, y: 2)
-    }
-}
-
-private struct AddActivitySheet: View {
+struct AddActivitySheet: View {
     let elderlyID: String
     let activityVM: ActivityViewModel
 
@@ -844,7 +852,7 @@ private struct AddActivitySheet: View {
     }
 }
 
-private struct EditActivitySheet: View {
+struct EditActivitySheet: View {
     let activity: CareActivity
     let activityVM: ActivityViewModel
 

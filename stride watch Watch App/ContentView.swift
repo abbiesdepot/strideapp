@@ -3,11 +3,13 @@ import SwiftUI
 
 extension Color {
     init(hex: String) {
+        //removes symbols like #
         let hex = hex.trimmingCharacters(in: CharacterSet.alphanumerics.inverted)
         var int: UInt64 = 0
+        //converts hex codes into num
         Scanner(string: hex).scanHexInt64(&int)
         let a, r, g, b: UInt64
-        switch hex.count {
+        switch hex.count { //bit shifting
         case 3:
             (a, r, g, b) = (255, (int >> 8) * 17, (int >> 4 & 0xF) * 17, (int & 0xF) * 17)
         case 6:

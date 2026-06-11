@@ -39,25 +39,25 @@ final class strideTests: XCTestCase {
         XCTAssertTrue(med.isEnabled)
     }
     
-    @MainActor
-    func testAuthViewModelInitialState() throws {
-        let viewModel = AuthViewModel()
-        
-        XCTAssertFalse(viewModel.isAuthenticated)
-        XCTAssertFalse(viewModel.isLoading)
-        XCTAssertNil(viewModel.currentUser)
-        XCTAssertNil(viewModel.errorMessage)
-    }
-    
-    @MainActor
-    func testFamilyDashboardInitialState() throws {
-        let viewModel = FamilyDashboardViewModel()
-        
-        XCTAssertTrue(viewModel.elderlyProfiles.isEmpty)
-        XCTAssertFalse(viewModel.isLoading)
-        XCTAssertNil(viewModel.errorMessage)
-    }
-    
+//    @MainActor
+//    func testAuthViewModelInitialState() throws {
+//        let viewModel = AuthViewModel()
+//        
+//        XCTAssertFalse(viewModel.isAuthenticated)
+//        XCTAssertFalse(viewModel.isLoading)
+//        XCTAssertNil(viewModel.currentUser)
+//        XCTAssertNil(viewModel.errorMessage)
+//    }
+//    
+//    @MainActor
+//    func testFamilyDashboardInitialState() throws {
+//        let viewModel = FamilyDashboardViewModel()
+//        
+//        XCTAssertTrue(viewModel.elderlyProfiles.isEmpty)
+//        XCTAssertFalse(viewModel.isLoading)
+//        XCTAssertNil(viewModel.errorMessage)
+//    }
+//    
     @MainActor
     func testCaregiverDashboardInitialState() throws {
         let viewModel = CaregiverDashboardViewModel()

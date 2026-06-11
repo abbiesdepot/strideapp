@@ -35,13 +35,13 @@ struct ElderlyDashboardCard: View {
             
             Divider()
             
-            // Stats Row
+            // stats row
             HStack {
                 StatItem(icon: "figure.walk", value: "\(profile.stepCount)", label: "Steps today")
                 Spacer()
                 StatItem(icon: "map", value: String(format: "%.1f km", profile.distanceKM), label: "Distance")
                 Spacer()
-                // Fake data for now, usually fetched from latest vital sign
+                // fake data for now, usually fetched from latest vital sign
                 StatItem(icon: "heart.fill", value: "72 bpm", label: "Heart Rate")
             }
             

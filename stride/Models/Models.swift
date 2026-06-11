@@ -20,7 +20,6 @@ struct ElderlyProfile: Codable, Identifiable {
     var bloodType: String?
     var notes: String?
     
-    var photoURL: String?
     var medicalNotes: String?
     var familyID: String?
     var stepCount: Int
@@ -86,6 +85,7 @@ struct Alert: Codable, Identifiable {
     var seenBy: [String]?
 }
 
+//blm kupanggil anywhere
 struct VitalSign: Codable, Identifiable {
     @DocumentID var id: String?
     var elderlyID: String

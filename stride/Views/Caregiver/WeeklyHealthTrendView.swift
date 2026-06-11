@@ -14,14 +14,6 @@ struct WeeklyHealthTrendView: View {
                 ScrollView {
                     VStack(spacing: 24) {
                         
-                        // TOP SUMMARY HEADER
-                        VStack(spacing: 8) {
-                            Text("Averages & Trends")
-                                .font(.system(size: 28, weight: .bold))
-                                .foregroundColor(.stridePrimary)
-                        }
-                        .padding(.top, 20)
-                        
                         // 1. CARDIOVASCULAR HEALTH CARD
                         VStack(alignment: .leading, spacing: 16) {
                             HStack {

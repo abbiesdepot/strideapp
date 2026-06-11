@@ -62,7 +62,7 @@ struct CaregiverDashboardView: View {
                             }
                             .buttonStyle(.plain)
 
-                            NavigationLink(destination: WeeklyHealthTrendView()) {
+                            NavigationLink(destination: WeeklyHealthTrendView(elderlyID: profile.id ?? "")) {
                                 Text("View Trends →")
                                     .font(.system(size: 14, weight: .semibold))
                                     .foregroundColor(.strideSecondary)

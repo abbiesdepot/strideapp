@@ -350,7 +350,7 @@ struct ElderlyDetailView: View {
 
     @ViewBuilder
     private var historyTab: some View {
-        WeeklyHealthTrendView()
+        WeeklyHealthTrendView(elderlyID: elderlyID)
     }
 }
 

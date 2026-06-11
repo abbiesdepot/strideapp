@@ -89,51 +89,6 @@ struct ElderlyDetailView: View {
             medVM.fetchMedications(elderlyID: elderlyID)
             activityVM.fetchActivities(elderlyID: elderlyID)
         }
-        .sheet(isPresented: $showEditSheet) {
-            if let profile = profile {
-                EditProfileSheet(elderlyID: elderlyID, profile: profile) { updated in
-                    self.profile = updated
-                }
-            }
-        }
-        .sheet(isPresented: $showAddMedSheet) {
-            AddMedicationSheet(elderlyID: elderlyID, medVM: medVM)
-        }
-        .sheet(item: $selectedMedication) { med in
-            EditMedicationSheet(medication: med, medVM: medVM)
-        }
-        .sheet(isPresented: $showAddActivitySheet) {
-            AddActivitySheet(elderlyID: elderlyID, activityVM: activityVM)
-        }
-        .sheet(item: $selectedActivity) { act in
-            EditActivitySheet(activity: act, activityVM: activityVM)
-        }
-        .alert("Delete Medication?", isPresented: $showDeleteConfirmAlert) {
-            Button("Delete", role: .destructive) {
-                if let med = medicationToDelete, let id = med.id {
-                    medVM.deleteMedication(medicationID: id)
-                }
-                medicationToDelete = nil
-            }
-            Button("Cancel", role: .cancel) {
-                medicationToDelete = nil
-            }
-        } message: {
-            Text("This action cannot be undone.")
-        }
-        .alert("Delete Activity?", isPresented: $showDeleteActivityAlert) {
-            Button("Delete", role: .destructive) {
-                if let act = activityToDelete, let id = act.id {
-                    activityVM.deleteActivity(activityID: id)
-                }
-                activityToDelete = nil
-            }
-            Button("Cancel", role: .cancel) {
-                activityToDelete = nil
-            }
-        } message: {
-            Text("This action cannot be undone.")
-        }
     }
 
     private func loadProfile() async {

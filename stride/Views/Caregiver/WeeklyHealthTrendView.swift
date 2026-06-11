@@ -16,20 +16,9 @@ struct WeeklyHealthTrendView: View {
                         
                         // TOP SUMMARY HEADER
                         VStack(spacing: 8) {
-                            Text("DAILY HEALTH REPORT")
-                                .font(.system(size: 14, weight: .bold))
-                                .foregroundColor(.strideSecondary)
-                                .tracking(1.5)
-                            
                             Text("Averages & Trends")
                                 .font(.system(size: 28, weight: .bold))
                                 .foregroundColor(.stridePrimary)
-                            
-                            Text("Summary compiled from all recorded historical activity logs and vitals.")
-                                .font(.system(size: 14))
-                                .foregroundColor(.strideTextSecondary)
-                                .multilineTextAlignment(.center)
-                                .padding(.horizontal, 24)
                         }
                         .padding(.top, 20)
                         
@@ -153,52 +142,6 @@ struct WeeklyHealthTrendView: View {
                                     }
                                 }
                                 .frame(maxWidth: .infinity, alignment: .leading)
-                            }
-                        }
-                        .padding(20)
-                        .background(Color.strideCardWhite)
-                        .cornerRadius(StrideTheme.cornerRadiusCard)
-                        .shadow(color: StrideTheme.shadowColor, radius: StrideTheme.shadowRadius, x: 0, y: 4)
-                        .padding(.horizontal, 24)
-                        
-                        // 3. MEDICATION COMPLIANCE CARD
-                        VStack(alignment: .leading, spacing: 16) {
-                            HStack {
-                                Image(systemName: "pills.circle.fill")
-                                    .font(.system(size: 22))
-                                    .foregroundColor(.strideTertiary)
-                                Text("Medication Compliance")
-                                    .font(.system(size: 18, weight: .bold))
-                                    .foregroundColor(.stridePrimary)
-                            }
-                            
-                            Divider()
-                            
-                            HStack(alignment: .center) {
-                                VStack(alignment: .leading, spacing: 6) {
-                                    Text("Compliance Rate")
-                                        .font(.system(size: 13, weight: .medium))
-                                        .foregroundColor(.strideTextSecondary)
-                                    
-                                    HStack(alignment: .lastTextBaseline, spacing: 2) {
-                                        Text(viewModel.medicationCompliance > 0 ? String(format: "%.0f%%", viewModel.medicationCompliance) : "—")
-                                            .font(.system(size: 44, weight: .black))
-                                            .foregroundColor(viewModel.medicationCompliance >= 80 ? .strideGreen : (viewModel.medicationCompliance >= 50 ? .strideYellow : .strideRed))
-                                    }
-                                }
-                                
-                                Spacer()
-                                
-                                // Simple compliance indicator message
-                                VStack(alignment: .trailing, spacing: 4) {
-                                    Text(viewModel.medicationCompliance >= 80 ? "Excellent!" : (viewModel.medicationCompliance >= 50 ? "Good" : "Needs Attention"))
-                                        .font(.system(size: 16, weight: .bold))
-                                        .foregroundColor(viewModel.medicationCompliance >= 80 ? .strideGreen : (viewModel.medicationCompliance >= 50 ? .strideYellow : .strideRed))
-                                    
-                                    Text("Target is >= 90%")
-                                        .font(.system(size: 12))
-                                        .foregroundColor(.strideTextSecondary)
-                                }
                             }
                         }
                         .padding(20)

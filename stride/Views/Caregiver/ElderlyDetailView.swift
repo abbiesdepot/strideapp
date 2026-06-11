@@ -354,4 +354,561 @@ struct ElderlyDetailView: View {
     }
 }
 
+private struct MedicationRow: View {
+    let medication: Medication
 
+    var body: some View {
+        HStack(spacing: 12) {
+            ZStack {
+                Circle()
+                    .fill(Color.strideSecondary.opacity(0.15))
+                    .frame(width: 44, height: 44)
+                Image(systemName: "pills.fill")
+                    .font(.system(size: 20))
+                    .foregroundColor(.strideSecondary)
+            }
+            VStack(alignment: .leading, spacing: 4) {
+                Text(medication.name)
+                    .font(.system(size: 16, weight: .semibold))
+                    .foregroundColor(.stridePrimary)
+                Text(medication.dosage)
+                    .font(.system(size: 14))
+                    .foregroundColor(.strideTextSecondary)
+            }
+            Spacer()
+            VStack(alignment: .trailing, spacing: 4) {
+                Text(medication.scheduleTime)
+                    .font(.system(size: 14, weight: .medium))
+                    .foregroundColor(.strideSecondary)
+                Text(medication.frequency)
+                    .font(.system(size: 12))
+                    .foregroundColor(.strideTextSecondary)
+            }
+        }
+        .padding(14)
+        .background(Color.strideCardWhite)
+        .cornerRadius(StrideTheme.cornerRadiusCard)
+        .shadow(color: StrideTheme.shadowColor, radius: StrideTheme.shadowRadius, x: 0, y: 2)
+    }
+}
+
+private struct EditProfileSheet: View {
+    let elderlyID: String
+    let profile: ElderlyProfile
+    let onSave: (ElderlyProfile) -> Void
+
+    @Environment(\.dismiss) private var dismiss
+
+    @State private var fullName: String
+    @State private var age: String
+    @State private var heightStr: String
+    @State private var weightStr: String
+    @State private var bloodType: String
+    @State private var medicalNotes: String
+    @State private var notes: String
+    @State private var heartRateStr: String
+    @State private var stressPercentageStr: String
+    @State private var sleepAwakeMinStr: String
+    @State private var sleepREMMinStr: String
+    @State private var sleepCoreMinStr: String
+    @State private var sleepDeepMinStr: String
+    @State private var isSaving = false
+
+    init(elderlyID: String, profile: ElderlyProfile, onSave: @escaping (ElderlyProfile) -> Void) {
+        self.elderlyID = elderlyID
+        self.profile = profile
+        self.onSave = onSave
+        _fullName = State(initialValue: profile.fullName)
+        _age = State(initialValue: "\(profile.age)")
+        _heightStr = State(initialValue: profile.height != nil ? String(format: "%.0f", profile.height!) : "")
+        _weightStr = State(initialValue: profile.weight != nil ? String(format: "%.0f", profile.weight!) : "")
+        _bloodType = State(initialValue: profile.bloodType ?? "")
+        _medicalNotes = State(initialValue: profile.medicalNotes ?? "")
+        _notes = State(initialValue: profile.notes ?? "")
+        _heartRateStr = State(initialValue: profile.heartRate != nil ? "\(profile.heartRate!)" : "")
+        _stressPercentageStr = State(initialValue: profile.stressPercentage != nil ? "\(profile.stressPercentage!)" : "")
+        _sleepAwakeMinStr = State(initialValue: profile.sleepAwakeMin != nil ? "\(profile.sleepAwakeMin!)" : "")
+        _sleepREMMinStr = State(initialValue: profile.sleepREMMin != nil ? "\(profile.sleepREMMin!)" : "")
+        _sleepCoreMinStr = State(initialValue: profile.sleepCoreMin != nil ? "\(profile.sleepCoreMin!)" : "")
+        _sleepDeepMinStr = State(initialValue: profile.sleepDeepMin != nil ? "\(profile.sleepDeepMin!)" : "")
+    }
+
+    var body: some View {
+        NavigationStack {
+            Form {
+                Section(header: Text("Basic Info")) {
+                    TextField("Full Name", text: $fullName)
+                    TextField("Age", text: $age)
+                        .keyboardType(.numberPad)
+                }
+                Section(header: Text("Physical")) {
+                    TextField("Height (cm)", text: $heightStr)
+                        .keyboardType(.decimalPad)
+                    TextField("Weight (kg)", text: $weightStr)
+                        .keyboardType(.decimalPad)
+                    TextField("Blood Type", text: $bloodType)
+                }
+                Section(header: Text("Health Metrics")) {
+                    TextField("Heart Rate (BPM)", text: $heartRateStr)
+                        .keyboardType(.numberPad)
+                    TextField("Stress (%)", text: $stressPercentageStr)
+                        .keyboardType(.numberPad)
+                    TextField("Sleep Awake (min)", text: $sleepAwakeMinStr)
+                        .keyboardType(.numberPad)
+                    TextField("Sleep REM (min)", text: $sleepREMMinStr)
+                        .keyboardType(.numberPad)
+                    TextField("Sleep Core (min)", text: $sleepCoreMinStr)
+                        .keyboardType(.numberPad)
+                    TextField("Sleep Deep (min)", text: $sleepDeepMinStr)
+                        .keyboardType(.numberPad)
+                }
+                Section(header: Text("Notes")) {
+                    TextField("Medical Notes", text: $medicalNotes, axis: .vertical)
+                        .lineLimit(3...6)
+                    TextField("General Notes", text: $notes, axis: .vertical)
+                        .lineLimit(3...6)
+                }
+            }
+            .navigationTitle("Edit Profile")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Cancel") { dismiss() }
+                }
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("Save") {
+                        save()
+                    }
+                    .disabled(fullName.isEmpty || isSaving)
+                }
+            }
+        }
+    }
+
+    private func save() {
+        isSaving = true
+        var data: [String: Any] = [
+            "fullName": fullName,
+            "bloodType": bloodType,
+            "medicalNotes": medicalNotes,
+            "notes": notes
+        ]
+        if let ageInt = Int(age) {
+            data["age"] = ageInt
+        }
+        if let h = Double(heightStr) {
+            data["height"] = h
+        }
+        if let w = Double(weightStr) {
+            data["weight"] = w
+        }
+        
+        if let hr = Int(heartRateStr) {
+            data["heartRate"] = hr
+        } else {
+            data["heartRate"] = FieldValue.delete()
+        }
+        if let stress = Int(stressPercentageStr) {
+            data["stressPercentage"] = stress
+        } else {
+            data["stressPercentage"] = FieldValue.delete()
+        }
+        if let awake = Int(sleepAwakeMinStr) {
+            data["sleepAwakeMin"] = awake
+        } else {
+            data["sleepAwakeMin"] = FieldValue.delete()
+        }
+        if let rem = Int(sleepREMMinStr) {
+            data["sleepREMMin"] = rem
+        } else {
+            data["sleepREMMin"] = FieldValue.delete()
+        }
+        if let core = Int(sleepCoreMinStr) {
+            data["sleepCoreMin"] = core
+        } else {
+            data["sleepCoreMin"] = FieldValue.delete()
+        }
+        if let deep = Int(sleepDeepMinStr) {
+            data["sleepDeepMin"] = deep
+        } else {
+            data["sleepDeepMin"] = FieldValue.delete()
+        }
+
+        Firestore.firestore().collection("elderlyProfiles").document(elderlyID).updateData(data) { _ in
+            isSaving = false
+            var updated = profile
+            updated.fullName = fullName
+            if let ageInt = Int(age) { updated.age = ageInt }
+            updated.height = Double(heightStr)
+            updated.weight = Double(weightStr)
+            updated.bloodType = bloodType.isEmpty ? nil : bloodType
+            updated.medicalNotes = medicalNotes.isEmpty ? nil : medicalNotes
+            updated.notes = notes.isEmpty ? nil : notes
+            updated.heartRate = Int(heartRateStr)
+            updated.stressPercentage = Int(stressPercentageStr)
+            updated.sleepAwakeMin = Int(sleepAwakeMinStr)
+            updated.sleepREMMin = Int(sleepREMMinStr)
+            updated.sleepCoreMin = Int(sleepCoreMinStr)
+            updated.sleepDeepMin = Int(sleepDeepMinStr)
+            onSave(updated)
+            dismiss()
+        }
+    }
+}
+
+private struct AddMedicationSheet: View {
+    let elderlyID: String
+    let medVM: MedicationViewModel
+
+    @Environment(\.dismiss) private var dismiss
+
+    @State private var name = ""
+    @State private var dosage = ""
+    @State private var frequency = "Once daily"
+    @State private var scheduleTime = Date()
+
+    let frequencies = ["Once daily", "Twice daily", "Three times daily", "As needed"]
+
+    var body: some View {
+        NavigationStack {
+            Form {
+                Section(header: Text("Details")) {
+                    TextField("Medication Name", text: $name)
+                    TextField("Dosage (e.g., 10mg)", text: $dosage)
+                    Picker("Frequency", selection: $frequency) {
+                        ForEach(frequencies, id: \.self) { Text($0) }
+                    }
+                }
+                Section(header: Text("Schedule")) {
+                    DatePicker("Time", selection: $scheduleTime, displayedComponents: .hourAndMinute)
+                }
+            }
+            .navigationTitle("Add Medication")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Cancel") { dismiss() }
+                }
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("Save") {
+                        let formatter = DateFormatter()
+                        formatter.dateFormat = "HH:mm"
+                        let timeString = formatter.string(from: scheduleTime)
+                        medVM.addMedication(
+                            elderlyID: elderlyID,
+                            name: name,
+                            dosage: dosage,
+                            frequency: frequency,
+                            scheduleTime: timeString
+                        )
+                        dismiss()
+                    }
+                    .disabled(name.isEmpty || dosage.isEmpty)
+                }
+            }
+        }
+    }
+}
+
+private struct EditMedicationSheet: View {
+    let medication: Medication
+    let medVM: MedicationViewModel
+
+    @Environment(\.dismiss) private var dismiss
+
+    @State private var name: String
+    @State private var dosage: String
+    @State private var frequency: String
+    @State private var scheduleTime: Date
+    @State private var isSaving = false
+
+    let frequencies = ["Once daily", "Twice daily", "Three times daily", "As needed"]
+
+    init(medication: Medication, medVM: MedicationViewModel) {
+        self.medication = medication
+        self.medVM = medVM
+        _name = State(initialValue: medication.name)
+        _dosage = State(initialValue: medication.dosage)
+        _frequency = State(initialValue: medication.frequency)
+        let formatter = DateFormatter()
+        formatter.dateFormat = "HH:mm"
+        _scheduleTime = State(initialValue: formatter.date(from: medication.scheduleTime) ?? Date())
+    }
+
+    var body: some View {
+        NavigationStack {
+            Form {
+                Section(header: Text("Details")) {
+                    TextField("Medication Name", text: $name)
+                    TextField("Dosage (e.g., 10mg)", text: $dosage)
+                    Picker("Frequency", selection: $frequency) {
+                        ForEach(frequencies, id: \.self) { Text($0) }
+                    }
+                }
+                Section(header: Text("Schedule")) {
+                    DatePicker("Time", selection: $scheduleTime, displayedComponents: .hourAndMinute)
+                }
+            }
+            .navigationTitle("Edit Medication")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Cancel") { dismiss() }
+                }
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("Save") {
+                        save()
+                    }
+                    .disabled(name.isEmpty || dosage.isEmpty || isSaving)
+                }
+            }
+        }
+    }
+
+    private func save() {
+        guard let id = medication.id else { return }
+        isSaving = true
+        let formatter = DateFormatter()
+        formatter.dateFormat = "HH:mm"
+        let timeString = formatter.string(from: scheduleTime)
+        Firestore.firestore().collection("medications").document(id).updateData([
+            "name": name,
+            "dosage": dosage,
+            "frequency": frequency,
+            "scheduleTime": timeString
+        ]) { _ in
+            isSaving = false
+            dismiss()
+        }
+    }
+}
+
+private struct ProfileStatItem: View {
+    let icon: String
+    let value: String
+    let label: String
+
+    var body: some View {
+        VStack(spacing: 6) {
+            Image(systemName: icon)
+                .font(.system(size: 22))
+                .foregroundColor(.strideSecondary)
+            Text(value)
+                .font(.system(size: 16, weight: .bold))
+                .foregroundColor(.strideTextPrimary)
+            Text(label)
+                .font(.system(size: 12))
+                .foregroundColor(.strideTextSecondary)
+        }
+        .frame(maxWidth: .infinity)
+    }
+}
+
+private struct InfoTile: View {
+    let icon: String
+    let iconColor: Color
+    let label: String
+    let value: String
+
+    var body: some View {
+        VStack(spacing: 8) {
+            Image(systemName: icon)
+                .font(.system(size: 22))
+                .foregroundColor(iconColor)
+            Text(value)
+                .font(.system(size: 16, weight: .bold))
+                .foregroundColor(.strideTextPrimary)
+            Text(label)
+                .font(.system(size: 12))
+                .foregroundColor(.strideTextSecondary)
+        }
+        .frame(maxWidth: .infinity)
+        .padding(.vertical, 16)
+        .background(Color.strideCardWhite)
+        .cornerRadius(StrideTheme.cornerRadiusCard)
+        .shadow(color: StrideTheme.shadowColor, radius: StrideTheme.shadowRadius, x: 0, y: 4)
+    }
+}
+
+private struct NoteCard: View {
+    let icon: String
+    let iconColor: Color
+    let title: String
+    let content: String
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            HStack {
+                Image(systemName: icon)
+                    .foregroundColor(iconColor)
+                Text(title)
+                    .font(.system(size: 16, weight: .bold))
+                    .foregroundColor(.strideTextPrimary)
+                Spacer()
+            }
+            Text(content)
+                .font(.system(size: 14))
+                .foregroundColor(.strideTextSecondary)
+                .fixedSize(horizontal: false, vertical: true)
+        }
+        .padding(16)
+        .background(Color.strideCardWhite)
+        .cornerRadius(StrideTheme.cornerRadiusCard)
+        .shadow(color: StrideTheme.shadowColor, radius: StrideTheme.shadowRadius, x: 0, y: 4)
+    }
+}
+
+private struct ActivityRow: View {
+    let activity: CareActivity
+
+    var body: some View {
+        HStack(spacing: 12) {
+            ZStack {
+                Circle()
+                    .fill(Color.strideSecondary.opacity(0.15))
+                    .frame(width: 44, height: 44)
+                Image(systemName: "figure.run")
+                    .font(.system(size: 20))
+                    .foregroundColor(.strideSecondary)
+            }
+            VStack(alignment: .leading, spacing: 4) {
+                Text(activity.name)
+                    .font(.system(size: 16, weight: .semibold))
+                    .foregroundColor(.stridePrimary)
+                Text(activity.frequency)
+                    .font(.system(size: 14))
+                    .foregroundColor(.strideTextSecondary)
+            }
+            Spacer()
+            VStack(alignment: .trailing, spacing: 4) {
+                Text(activity.scheduleTime)
+                    .font(.system(size: 14, weight: .medium))
+                    .foregroundColor(.strideSecondary)
+            }
+        }
+        .padding(14)
+        .background(Color.strideCardWhite)
+        .cornerRadius(StrideTheme.cornerRadiusCard)
+        .shadow(color: StrideTheme.shadowColor, radius: StrideTheme.shadowRadius, x: 0, y: 2)
+    }
+}
+
+private struct AddActivitySheet: View {
+    let elderlyID: String
+    let activityVM: ActivityViewModel
+
+    @Environment(\.dismiss) private var dismiss
+
+    @State private var name = ""
+    @State private var frequency = "Once daily"
+    @State private var scheduleTime = Date()
+
+    let frequencies = ["Once daily", "Twice daily", "Three times daily", "As needed"]
+
+    var body: some View {
+        NavigationStack {
+            Form {
+                Section(header: Text("Details")) {
+                    TextField("Activity Name (e.g. Shower)", text: $name)
+                    Picker("Frequency", selection: $frequency) {
+                        ForEach(frequencies, id: \.self) { Text($0) }
+                    }
+                }
+                Section(header: Text("Schedule")) {
+                    DatePicker("Time", selection: $scheduleTime, displayedComponents: .hourAndMinute)
+                }
+            }
+            .navigationTitle("Add Activity")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Cancel") { dismiss() }
+                }
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("Save") {
+                        let formatter = DateFormatter()
+                        formatter.dateFormat = "HH:mm"
+                        let timeString = formatter.string(from: scheduleTime)
+                        activityVM.addActivity(
+                            elderlyID: elderlyID,
+                            name: name,
+                            frequency: frequency,
+                            scheduleTime: timeString
+                        )
+                        dismiss()
+                    }
+                    .disabled(name.isEmpty)
+                }
+            }
+        }
+    }
+}
+
+private struct EditActivitySheet: View {
+    let activity: CareActivity
+    let activityVM: ActivityViewModel
+
+    @Environment(\.dismiss) private var dismiss
+
+    @State private var name: String
+    @State private var frequency: String
+    @State private var scheduleTime: Date
+    @State private var isSaving = false
+
+    let frequencies = ["Once daily", "Twice daily", "Three times daily", "As needed"]
+
+    init(activity: CareActivity, activityVM: ActivityViewModel) {
+        self.activity = activity
+        self.activityVM = activityVM
+        _name = State(initialValue: activity.name)
+        _frequency = State(initialValue: activity.frequency)
+        let formatter = DateFormatter()
+        formatter.dateFormat = "HH:mm"
+        _scheduleTime = State(initialValue: formatter.date(from: activity.scheduleTime) ?? Date())
+    }
+
+    var body: some View {
+        NavigationStack {
+            Form {
+                Section(header: Text("Details")) {
+                    TextField("Activity Name", text: $name)
+                    Picker("Frequency", selection: $frequency) {
+                        ForEach(frequencies, id: \.self) { Text($0) }
+                    }
+                }
+                Section(header: Text("Schedule")) {
+                    DatePicker("Time", selection: $scheduleTime, displayedComponents: .hourAndMinute)
+                }
+            }
+            .navigationTitle("Edit Activity")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Cancel") { dismiss() }
+                }
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("Save") {
+                        save()
+                    }
+                    .disabled(name.isEmpty || isSaving)
+                }
+            }
+        }
+    }
+
+    private func save() {
+        guard let id = activity.id else { return }
+        isSaving = true
+        let formatter = DateFormatter()
+        formatter.dateFormat = "HH:mm"
+        let timeString = formatter.string(from: scheduleTime)
+        Firestore.firestore().collection("careActivities").document(id).updateData([
+            "name": name,
+            "frequency": frequency,
+            "scheduleTime": timeString
+        ]) { _ in
+            isSaving = false
+            dismiss()
+        }
+    }
+}

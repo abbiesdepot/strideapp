@@ -3,6 +3,9 @@ import SwiftUI
 struct CaregiverProfileView: View {
     @EnvironmentObject var authViewModel: AuthViewModel
     @StateObject private var dashboardVM = CaregiverDashboardViewModel()
+    @StateObject private var peopleVM = PeopleViewModel()
+    
+
 
     var body: some View {
         NavigationStack {
@@ -30,6 +33,11 @@ struct CaregiverProfileView: View {
         .onAppear {
             if let uid = authViewModel.currentUser?.id {
                 dashboardVM.fetchDashboardData(caregiverID: uid)
+            }
+        }
+        .onChange(of: dashboardVM.family?.id) { familyID in
+            if let familyID = familyID {
+                peopleVM.fetchFamilyMembers(familyID: familyID)
             }
         }
     }
@@ -103,6 +111,59 @@ struct CaregiverProfileView: View {
             .cornerRadius(StrideTheme.cornerRadiusCard)
             .shadow(color: StrideTheme.shadowColor, radius: StrideTheme.shadowRadius, x: 0, y: 2)
             .padding(.horizontal, 20)
+
+            // FAMILY MEMBERS LIST CARD
+            VStack(alignment: .leading, spacing: 12) {
+                Text("Joined Family Members")
+                    .font(.system(size: 14, weight: .bold))
+                    .foregroundColor(.strideTextSecondary)
+                
+                if peopleVM.isLoading {
+                    ProgressView()
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 12)
+                } else if peopleVM.familyMembers.isEmpty {
+                    Text("Belum ada anggota keluarga yang bergabung.")
+                        .font(.system(size: 14))
+                        .foregroundColor(.strideTextSecondary)
+                        .italic()
+                        .frame(maxWidth: .infinity, alignment: .center)
+                        .padding(.vertical, 12)
+                } else {
+                    VStack(alignment: .leading, spacing: 12) {
+                        ForEach(peopleVM.familyMembers) { member in
+                            HStack(spacing: 12) {
+                                Circle()
+                                    .fill(Color.strideSecondary.opacity(0.15))
+                                    .frame(width: 36, height: 36)
+                                    .overlay(
+                                        Image(systemName: "person.fill")
+                                            .font(.system(size: 16))
+                                            .foregroundColor(.strideSecondary)
+                                    )
+                                
+                                VStack(alignment: .leading, spacing: 2) {
+                                    Text(member.fullName)
+                                        .font(.system(size: 15, weight: .semibold))
+                                        .foregroundColor(.stridePrimary)
+                                    Text(member.role.replacingOccurrences(of: "_", with: " ").capitalized)
+                                        .font(.system(size: 12))
+                                        .foregroundColor(.strideTextSecondary)
+                                }
+                                
+                                Spacer()
+                            }
+                        }
+                    }
+                }
+            }
+            .padding(20)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .background(Color.strideCardWhite)
+            .cornerRadius(StrideTheme.cornerRadiusCard)
+            .shadow(color: StrideTheme.shadowColor, radius: StrideTheme.shadowRadius, x: 0, y: 2)
+            .padding(.horizontal, 20)
+            .padding(.top, 4)
 
             if let profile = dashboardVM.elderlyProfile {
                 NavigationLink(destination: ElderlyDetailView(elderlyID: profile.id ?? "")) {

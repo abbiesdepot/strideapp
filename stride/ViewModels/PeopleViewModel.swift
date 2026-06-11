@@ -70,4 +70,59 @@ class PeopleViewModel: ObservableObject {
     func removeFamilyMember(memberDocID: String) {
         db.collection("familyMembers").document(memberDocID).delete()
     }
+    
+    func addFamilyMemberByEmail(email: String, familyID: String, completion: @escaping (Result<Void, Error>) -> Void) {
+        let cleanedEmail = email.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+        
+        db.collection("users")
+            .whereField("email", isEqualTo: cleanedEmail)
+            .getDocuments { [weak self] snapshot, error in
+                guard let self = self else { return }
+                
+                if let error = error {
+                    completion(.failure(error))
+                    return
+                }
+                
+                guard let userDoc = snapshot?.documents.first else {
+                    let notFoundError = NSError(domain: "PeopleViewModel", code: 404, userInfo: [NSLocalizedDescriptionKey: "Email family belum terdaftar."])
+                    completion(.failure(notFoundError))
+                    return
+                }
+                
+                let userID = userDoc.documentID
+                
+                // Cek apakah user sudah terdaftar di keluarga ini
+                self.db.collection("familyMembers")
+                    .whereField("familyID", isEqualTo: familyID)
+                    .whereField("userID", isEqualTo: userID)
+                    .getDocuments { memberSnapshot, memberError in
+                        if let memberError = memberError {
+                            completion(.failure(memberError))
+                            return
+                        }
+                        
+                        if let memberDocs = memberSnapshot?.documents, !memberDocs.isEmpty {
+                            let duplicateError = NSError(domain: "PeopleViewModel", code: 409, userInfo: [NSLocalizedDescriptionKey: "Anggota keluarga ini sudah bergabung."])
+                            completion(.failure(duplicateError))
+                            return
+                        }
+                        
+                        // Tambahkan ke familyMembers
+                        let newMemberData: [String: Any] = [
+                            "familyID": familyID,
+                            "userID": userID,
+                            "joinedAt": Timestamp(date: Date())
+                        ]
+                        
+                        self.db.collection("familyMembers").addDocument(data: newMemberData) { addError in
+                            if let addError = addError {
+                                completion(.failure(addError))
+                            } else {
+                                completion(.success(()))
+                            }
+                        }
+                    }
+            }
+    }
 }

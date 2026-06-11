@@ -68,8 +68,6 @@ struct MedicationReminderView: View {
         .animation(.easeInOut(duration: 0.2), value: showCheckmark)
     }
 
-    // MARK: - Private
-
     private func scheduleReminder() {
         let content = UNMutableNotificationContent()
         content.title = "Medication Reminder"

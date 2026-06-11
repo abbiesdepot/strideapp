@@ -24,14 +24,11 @@ struct SOSConfirmView: View {
                         .font(.caption2)
                         .foregroundColor(.gray)
 
-                    // Circular progress ring with hold gesture
                     ZStack {
-                        // Background track
                         Circle()
                             .stroke(Color.white.opacity(0.15), lineWidth: 6)
                             .frame(width: 70, height: 70)
 
-                        // Progress ring
                         Circle()
                             .trim(from: 0, to: progress)
                             .stroke(Color.red, style: StrokeStyle(lineWidth: 6, lineCap: .round))
@@ -78,8 +75,6 @@ struct SOSConfirmView: View {
         }
     }
 
-    // MARK: - Timer Helpers
-
     private func startTimer() {
         timer = Timer.scheduledTimer(withTimeInterval: 0.02, repeats: true) { _ in
             guard isHolding else { return }
@@ -99,8 +94,6 @@ struct SOSConfirmView: View {
     }
 }
 
-// MARK: - SOSSentView
-
 struct SOSSentView: View {
     @EnvironmentObject var sensorManager: WatchSensorManager
     @Environment(\.dismiss) private var dismiss
@@ -113,7 +106,6 @@ struct SOSSentView: View {
                 .ignoresSafeArea()
 
             VStack(spacing: 12) {
-                // Pulsing teal circle
                 Circle()
                     .fill(Color(hex: "#4DA1A9").opacity(0.35))
                     .frame(width: 70, height: 70)

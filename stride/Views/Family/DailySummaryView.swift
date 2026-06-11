@@ -2,6 +2,7 @@ import SwiftUI
 
 struct DailySummaryView: View {
     let profile: ElderlyProfile
+    @StateObject private var medVM = MedicationViewModel()
     
     var body: some View {
         ScrollView {
@@ -26,16 +27,8 @@ struct DailySummaryView: View {
                 }
                 .padding(.horizontal, 24)
                 
-                VStack(alignment: .leading, spacing: 16) {
-                    Text("Today's Schedule")
-                        .font(.system(size: 18, weight: .bold))
-                        .foregroundColor(.stridePrimary)
-                    
-                    Text("Medication schedule will appear here.")
-                        .foregroundColor(.strideTextSecondary)
-                }
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .padding(.horizontal, 24)
+                DashboardTodoList(medVM: medVM, elderlyID: profile.id ?? "")
+                    .padding(.horizontal, 24)
                 
                 Spacer()
             }

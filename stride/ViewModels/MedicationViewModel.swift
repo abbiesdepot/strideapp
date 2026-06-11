@@ -40,10 +40,11 @@ class MedicationViewModel: ObservableObject {
         
         let calendar = Calendar.current
         let startOfToday = calendar.startOfDay(for: Date())
+        let startOfTodayTimestamp = Timestamp(date: startOfToday)
         
         logsListenerRegistration = db.collection("medicationLogs")
             .whereField("elderlyID", isEqualTo: elderlyID)
-            .whereField("scheduledTime", isGreaterThanOrEqualTo: startOfToday)
+            .whereField("scheduledTime", isGreaterThanOrEqualTo: startOfTodayTimestamp)
             .addSnapshotListener { [weak self] snapshot, error in
                 guard let self = self else { return }
                 
@@ -102,12 +103,13 @@ class MedicationViewModel: ObservableObject {
     }
     
     func untakeMedication(medicationID: String) {
-        let todayLog = todayLogs.first { $0.medicationID == medicationID }
-        guard let logID = todayLog?.id else { return }
-        
-        db.collection("medicationLogs").document(logID).delete() { [weak self] error in
-            if let error = error {
-                self?.errorMessage = error.localizedDescription
+        let matchingLogs = todayLogs.filter { $0.medicationID == medicationID }
+        for log in matchingLogs {
+            guard let logID = log.id else { continue }
+            db.collection("medicationLogs").document(logID).delete() { [weak self] error in
+                if let error = error {
+                    self?.errorMessage = error.localizedDescription
+                }
             }
         }
     }

@@ -99,3 +99,22 @@ struct VitalSign: Codable, Identifiable {
     var spO2: Double
     var recordedAt: Date
 }
+
+struct CareActivity: Codable, Identifiable {
+    @DocumentID var id: String?
+    var elderlyID: String
+    var name: String
+    var frequency: String
+    var scheduleTime: String
+    var isEnabled: Bool
+    var createdAt: Date?
+}
+
+struct CareActivityLog: Codable, Identifiable {
+    @DocumentID var id: String?
+    var activityID: String
+    var elderlyID: String
+    var scheduledTime: Date
+    var confirmedAt: Date?
+    var status: String // "done" or "missed"
+}

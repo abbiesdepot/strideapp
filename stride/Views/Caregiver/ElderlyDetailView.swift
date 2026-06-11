@@ -16,12 +16,19 @@ struct ElderlyDetailView: View {
     @State private var showDeleteConfirmAlert = false
     @State private var medicationToDelete: Medication? = nil
 
+    @StateObject private var activityVM = ActivityViewModel()
+    @State private var showAddActivitySheet = false
+    @State private var selectedActivity: CareActivity? = nil
+    @State private var showDeleteActivityAlert = false
+    @State private var activityToDelete: CareActivity? = nil
+
     var body: some View {
         VStack(spacing: 0) {
             Picker("", selection: $selectedTab) {
                 Text("Overview").tag(0)
                 Text("Medications").tag(1)
-                Text("History").tag(2)
+                Text("Activities").tag(2)
+                Text("History").tag(3)
             }
             .pickerStyle(.segmented)
             .padding(.horizontal, 20)
@@ -37,6 +44,8 @@ struct ElderlyDetailView: View {
                     overviewTab(profile: profile)
                 } else if selectedTab == 1 {
                     medicationsTab
+                } else if selectedTab == 2 {
+                    activitiesTab
                 } else {
                     historyTab
                 }
@@ -64,6 +73,13 @@ struct ElderlyDetailView: View {
                             .fontWeight(.bold)
                     }
                 }
+            } else if selectedTab == 2 {
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button(action: { showAddActivitySheet = true }) {
+                        Image(systemName: "plus")
+                            .fontWeight(.bold)
+                    }
+                }
             }
         }
         .task {
@@ -71,6 +87,7 @@ struct ElderlyDetailView: View {
         }
         .onAppear {
             medVM.fetchMedications(elderlyID: elderlyID)
+            activityVM.fetchActivities(elderlyID: elderlyID)
         }
         .sheet(isPresented: $showEditSheet) {
             if let profile = profile {
@@ -85,6 +102,12 @@ struct ElderlyDetailView: View {
         .sheet(item: $selectedMedication) { med in
             EditMedicationSheet(medication: med, medVM: medVM)
         }
+        .sheet(isPresented: $showAddActivitySheet) {
+            AddActivitySheet(elderlyID: elderlyID, activityVM: activityVM)
+        }
+        .sheet(item: $selectedActivity) { act in
+            EditActivitySheet(activity: act, activityVM: activityVM)
+        }
         .alert("Delete Medication?", isPresented: $showDeleteConfirmAlert) {
             Button("Delete", role: .destructive) {
                 if let med = medicationToDelete, let id = med.id {
@@ -94,6 +117,19 @@ struct ElderlyDetailView: View {
             }
             Button("Cancel", role: .cancel) {
                 medicationToDelete = nil
+            }
+        } message: {
+            Text("This action cannot be undone.")
+        }
+        .alert("Delete Activity?", isPresented: $showDeleteActivityAlert) {
+            Button("Delete", role: .destructive) {
+                if let act = activityToDelete, let id = act.id {
+                    activityVM.deleteActivity(activityID: id)
+                }
+                activityToDelete = nil
+            }
+            Button("Cancel", role: .cancel) {
+                activityToDelete = nil
             }
         } message: {
             Text("This action cannot be undone.")
@@ -254,6 +290,50 @@ struct ElderlyDetailView: View {
                         Button(role: .destructive) {
                             medicationToDelete = med
                             showDeleteConfirmAlert = true
+                        } label: {
+                            Label("Delete", systemImage: "trash")
+                        }
+                    }
+                    .listRowBackground(Color.strideBackground)
+                    .listRowSeparator(.hidden)
+                    .listRowInsets(EdgeInsets(top: 6, leading: 20, bottom: 6, trailing: 20))
+                }
+            }
+            .listStyle(.plain)
+            .background(Color.strideBackground)
+        }
+    }
+
+    @ViewBuilder
+    private var activitiesTab: some View {
+        if activityVM.isLoading {
+            Spacer()
+            ProgressView()
+            Spacer()
+        } else if activityVM.activities.isEmpty {
+            Spacer()
+            VStack(spacing: 16) {
+                Image(systemName: "figure.run")
+                    .font(.system(size: 60))
+                    .foregroundColor(.strideSecondary)
+                Text("No Activities")
+                    .font(.system(size: 20, weight: .bold))
+                    .foregroundColor(.stridePrimary)
+                Text("Tap + to add an activity.")
+                    .foregroundColor(.strideTextSecondary)
+            }
+            Spacer()
+        } else {
+            List {
+                ForEach(activityVM.activities) { act in
+                    Button(action: { selectedActivity = act }) {
+                        ActivityRow(activity: act)
+                    }
+                    .buttonStyle(.plain)
+                    .swipeActions(edge: .trailing) {
+                        Button(role: .destructive) {
+                            activityToDelete = act
+                            showDeleteActivityAlert = true
                         } label: {
                             Label("Delete", systemImage: "trash")
                         }
@@ -675,5 +755,160 @@ private struct NoteCard: View {
         .background(Color.strideCardWhite)
         .cornerRadius(StrideTheme.cornerRadiusCard)
         .shadow(color: StrideTheme.shadowColor, radius: StrideTheme.shadowRadius, x: 0, y: 4)
+    }
+}
+
+private struct ActivityRow: View {
+    let activity: CareActivity
+
+    var body: some View {
+        HStack(spacing: 12) {
+            ZStack {
+                Circle()
+                    .fill(Color.strideSecondary.opacity(0.15))
+                    .frame(width: 44, height: 44)
+                Image(systemName: "figure.run")
+                    .font(.system(size: 20))
+                    .foregroundColor(.strideSecondary)
+            }
+            VStack(alignment: .leading, spacing: 4) {
+                Text(activity.name)
+                    .font(.system(size: 16, weight: .semibold))
+                    .foregroundColor(.stridePrimary)
+                Text(activity.frequency)
+                    .font(.system(size: 14))
+                    .foregroundColor(.strideTextSecondary)
+            }
+            Spacer()
+            VStack(alignment: .trailing, spacing: 4) {
+                Text(activity.scheduleTime)
+                    .font(.system(size: 14, weight: .medium))
+                    .foregroundColor(.strideSecondary)
+            }
+        }
+        .padding(14)
+        .background(Color.strideCardWhite)
+        .cornerRadius(StrideTheme.cornerRadiusCard)
+        .shadow(color: StrideTheme.shadowColor, radius: StrideTheme.shadowRadius, x: 0, y: 2)
+    }
+}
+
+private struct AddActivitySheet: View {
+    let elderlyID: String
+    let activityVM: ActivityViewModel
+
+    @Environment(\.dismiss) private var dismiss
+
+    @State private var name = ""
+    @State private var frequency = "Once daily"
+    @State private var scheduleTime = Date()
+
+    let frequencies = ["Once daily", "Twice daily", "Three times daily", "As needed"]
+
+    var body: some View {
+        NavigationStack {
+            Form {
+                Section(header: Text("Details")) {
+                    TextField("Activity Name (e.g. Shower)", text: $name)
+                    Picker("Frequency", selection: $frequency) {
+                        ForEach(frequencies, id: \.self) { Text($0) }
+                    }
+                }
+                Section(header: Text("Schedule")) {
+                    DatePicker("Time", selection: $scheduleTime, displayedComponents: .hourAndMinute)
+                }
+            }
+            .navigationTitle("Add Activity")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Cancel") { dismiss() }
+                }
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("Save") {
+                        let formatter = DateFormatter()
+                        formatter.dateFormat = "HH:mm"
+                        let timeString = formatter.string(from: scheduleTime)
+                        activityVM.addActivity(
+                            elderlyID: elderlyID,
+                            name: name,
+                            frequency: frequency,
+                            scheduleTime: timeString
+                        )
+                        dismiss()
+                    }
+                    .disabled(name.isEmpty)
+                }
+            }
+        }
+    }
+}
+
+private struct EditActivitySheet: View {
+    let activity: CareActivity
+    let activityVM: ActivityViewModel
+
+    @Environment(\.dismiss) private var dismiss
+
+    @State private var name: String
+    @State private var frequency: String
+    @State private var scheduleTime: Date
+    @State private var isSaving = false
+
+    let frequencies = ["Once daily", "Twice daily", "Three times daily", "As needed"]
+
+    init(activity: CareActivity, activityVM: ActivityViewModel) {
+        self.activity = activity
+        self.activityVM = activityVM
+        _name = State(initialValue: activity.name)
+        _frequency = State(initialValue: activity.frequency)
+        let formatter = DateFormatter()
+        formatter.dateFormat = "HH:mm"
+        _scheduleTime = State(initialValue: formatter.date(from: activity.scheduleTime) ?? Date())
+    }
+
+    var body: some View {
+        NavigationStack {
+            Form {
+                Section(header: Text("Details")) {
+                    TextField("Activity Name", text: $name)
+                    Picker("Frequency", selection: $frequency) {
+                        ForEach(frequencies, id: \.self) { Text($0) }
+                    }
+                }
+                Section(header: Text("Schedule")) {
+                    DatePicker("Time", selection: $scheduleTime, displayedComponents: .hourAndMinute)
+                }
+            }
+            .navigationTitle("Edit Activity")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Cancel") { dismiss() }
+                }
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("Save") {
+                        save()
+                    }
+                    .disabled(name.isEmpty || isSaving)
+                }
+            }
+        }
+    }
+
+    private func save() {
+        guard let id = activity.id else { return }
+        isSaving = true
+        let formatter = DateFormatter()
+        formatter.dateFormat = "HH:mm"
+        let timeString = formatter.string(from: scheduleTime)
+        Firestore.firestore().collection("careActivities").document(id).updateData([
+            "name": name,
+            "frequency": frequency,
+            "scheduleTime": timeString
+        ]) { _ in
+            isSaving = false
+            dismiss()
+        }
     }
 }

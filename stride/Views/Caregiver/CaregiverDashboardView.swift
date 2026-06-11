@@ -4,6 +4,7 @@ struct CaregiverDashboardView: View {
     @EnvironmentObject var authViewModel: AuthViewModel
     @StateObject private var viewModel = CaregiverDashboardViewModel()
     @StateObject private var medVM = MedicationViewModel()
+    @StateObject private var activityVM = ActivityViewModel()
     @State private var showingSetup = false
 
     var body: some View {
@@ -49,7 +50,7 @@ struct CaregiverDashboardView: View {
                         .buttonStyle(PlainButtonStyle())
                         .padding(.horizontal, 24)
 
-                        DashboardTodoList(medVM: medVM, elderlyID: profile.id ?? "")
+                        DashboardTodoList(medVM: medVM, activityVM: activityVM, elderlyID: profile.id ?? "")
                             .padding(.horizontal, 24)
                             .padding(.top, 16)
 

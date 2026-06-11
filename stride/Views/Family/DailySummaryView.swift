@@ -3,6 +3,7 @@ import SwiftUI
 struct DailySummaryView: View {
     let profile: ElderlyProfile
     @StateObject private var medVM = MedicationViewModel()
+    @StateObject private var activityVM = ActivityViewModel()
     
     var body: some View {
         ScrollView {
@@ -27,7 +28,7 @@ struct DailySummaryView: View {
                 }
                 .padding(.horizontal, 24)
                 
-                DashboardTodoList(medVM: medVM, elderlyID: profile.id ?? "")
+                DashboardTodoList(medVM: medVM, activityVM: activityVM, elderlyID: profile.id ?? "")
                     .padding(.horizontal, 24)
                 
                 Spacer()

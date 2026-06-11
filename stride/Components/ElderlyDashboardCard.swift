@@ -56,7 +56,7 @@ struct ElderlyDashboardCard: View {
                                 .frame(maxWidth: .infinity, alignment: .center)
                             
                             HStack(alignment: .lastTextBaseline, spacing: 2) {
-                                Text("\(profile.heartRate ?? 68)")
+                                Text(profile.heartRate != nil ? "\(profile.heartRate!)" : "—")
                                     .font(.system(size: 40, weight: .bold))
                                     .foregroundColor(.white)
                                 Text("BPM")
@@ -81,10 +81,10 @@ struct ElderlyDashboardCard: View {
                             .foregroundColor(.stridePrimary)
                         
                         VStack(spacing: 6) {
-                            sleepRow(dotColor: Color(hex: "#FF5E5B"), label: "Awake", duration: formatMinutes(profile.sleepAwakeMin ?? 6))
-                            sleepRow(dotColor: Color(hex: "#79D7BE"), label: "REM", duration: formatMinutes(profile.sleepREMMin ?? 105))
-                            sleepRow(dotColor: Color(hex: "#4A90E2"), label: "Core", duration: formatMinutes(profile.sleepCoreMin ?? 288))
-                            sleepRow(dotColor: Color(hex: "#8B5FBF"), label: "Deep", duration: formatMinutes(profile.sleepDeepMin ?? 37))
+                            sleepRow(dotColor: Color(hex: "#FF5E5B"), label: "Awake", duration: formatMinutes(profile.sleepAwakeMin))
+                            sleepRow(dotColor: Color(hex: "#79D7BE"), label: "REM", duration: formatMinutes(profile.sleepREMMin))
+                            sleepRow(dotColor: Color(hex: "#4A90E2"), label: "Core", duration: formatMinutes(profile.sleepCoreMin))
+                            sleepRow(dotColor: Color(hex: "#8B5FBF"), label: "Deep", duration: formatMinutes(profile.sleepDeepMin))
                         }
                     }
                     .padding(16)
@@ -109,7 +109,7 @@ struct ElderlyDashboardCard: View {
                         Spacer()
                         
                         VStack(alignment: .center, spacing: 4) {
-                            Text("\(profile.stressPercentage ?? 67)%")
+                            Text(profile.stressPercentage != nil ? "\(profile.stressPercentage!)%" : "—")
                                 .font(.system(size: 40, weight: .bold))
                                 .foregroundColor(.stridePrimary)
                             Text("Stress")
@@ -142,7 +142,7 @@ struct ElderlyDashboardCard: View {
                             Image(systemName: "figure.walk")
                                 .foregroundColor(.white)
                                 .font(.system(size: 26))
-                            Text("\(profile.stepCount)")
+                            Text(profile.stepCount != nil ? "\(profile.stepCount!)" : "—")
                                 .font(.system(size: 30, weight: .bold))
                                 .foregroundColor(.white)
                         }
@@ -151,7 +151,7 @@ struct ElderlyDashboardCard: View {
                         Spacer()
                         
                         HStack {
-                            Text(String(format: "%.1f KM", profile.distanceKM))
+                            Text(profile.distanceKM != nil ? String(format: "%.1f KM", profile.distanceKM!) : "—")
                                 .font(.system(size: 12, weight: .bold))
                                 .foregroundColor(.white)
                             Spacer()

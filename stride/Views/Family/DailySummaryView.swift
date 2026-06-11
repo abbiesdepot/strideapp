@@ -21,8 +21,8 @@ struct DailySummaryView: View {
                 .padding(.top, 20)
                 
                 HStack(spacing: 16) {
-                    MiniStatCard(title: "Steps", value: "\(profile.stepCount)", icon: "figure.walk")
-                    MiniStatCard(title: "Distance", value: String(format: "%.1f km", profile.distanceKM), icon: "map")
+                    MiniStatCard(title: "Steps", value: profile.stepCount != nil ? "\(profile.stepCount!)" : "—", icon: "figure.walk")
+                    MiniStatCard(title: "Distance", value: profile.distanceKM != nil ? String(format: "%.1f km", profile.distanceKM!) : "—", icon: "map")
                 }
                 .padding(.horizontal, 24)
                 

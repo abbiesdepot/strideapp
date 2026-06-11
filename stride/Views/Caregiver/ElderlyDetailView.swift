@@ -143,9 +143,9 @@ struct ElderlyDetailView: View {
                 .padding(.top, 24)
 
                 HStack {
-                    ProfileStatItem(icon: "figure.walk", value: "\(profile.stepCount)", label: "Steps today")
+                    ProfileStatItem(icon: "figure.walk", value: profile.stepCount != nil ? "\(profile.stepCount!)" : "—", label: "Steps today")
                     Spacer()
-                    ProfileStatItem(icon: "map", value: String(format: "%.1f km", profile.distanceKM), label: "Distance")
+                    ProfileStatItem(icon: "map", value: profile.distanceKM != nil ? String(format: "%.1f km", profile.distanceKM!) : "—", label: "Distance")
                     Spacer()
                     ProfileStatItem(icon: "heart.fill", value: profile.heartRate != nil ? "\(profile.heartRate!) bpm" : "—", label: "Heart Rate")
                 }

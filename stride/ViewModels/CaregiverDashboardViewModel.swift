@@ -82,8 +82,8 @@ class CaregiverDashboardViewModel: ObservableObject {
             photoURL: nil,
             medicalNotes: medicalNotes,
             familyID: nil, // bakal be set after Family creation
-            stepCount: 0,
-            distanceKM: 0.0,
+            stepCount: nil,
+            distanceKM: nil,
             heartRate: nil,
             stressPercentage: nil,
             sleepAwakeMin: nil,

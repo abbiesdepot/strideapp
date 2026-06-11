@@ -23,8 +23,8 @@ struct ElderlyProfile: Codable, Identifiable {
     var photoURL: String?
     var medicalNotes: String?
     var familyID: String?
-    var stepCount: Int
-    var distanceKM: Double
+    var stepCount: Int?
+    var distanceKM: Double?
     var heartRate: Int?
     var stressPercentage: Int?
     var sleepAwakeMin: Int?

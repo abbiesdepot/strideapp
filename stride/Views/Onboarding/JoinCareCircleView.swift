@@ -3,6 +3,7 @@ import SwiftUI
 struct JoinCareCircleView: View {
     @EnvironmentObject var authViewModel: AuthViewModel
     @StateObject private var familyVM = FamilyDashboardViewModel()
+    @Environment(\.dismiss) var dismiss
 
     /// When non-nil this view is presented as a sheet; on success the closure is called
     /// and the sheet is dismissed by the caller — `authViewModel.isInCareCircle` is NOT set.
@@ -116,18 +117,24 @@ struct JoinCareCircleView: View {
         .background(Color.strideCardWhite.ignoresSafeArea())
         .toolbar {
             ToolbarItem(placement: .navigationBarTrailing) {
-                Button(action: {
-                    authViewModel.logout()
-                }) {
-                    Text("Sign Out")
-                        .foregroundColor(.strideRed)
-                        .font(.system(size: 16, weight: .semibold))
+                // Sheet mode: show Cancel to go back to Profile
+                // Standalone onboarding mode: show Sign Out
+                if onJoinSuccess != nil {
+                    Button("Cancel") {
+                        dismiss()
+                    }
+                    .foregroundColor(.strideSecondary)
+                    .font(.system(size: 16, weight: .semibold))
+                } else {
+                    Button(action: {
+                        authViewModel.logout()
+                    }) {
+                        Text("Sign Out")
+                            .foregroundColor(.strideRed)
+                            .font(.system(size: 16, weight: .semibold))
+                    }
                 }
             }
-        }
-        .navigationDestination(isPresented: $isSuccess) {
-            FamilyMainView()
-                .navigationBarBackButtonHidden(true)
         }
     }
 }

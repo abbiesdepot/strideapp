@@ -3,6 +3,8 @@ import SwiftUI
 struct CaregiverDashboardView: View {
     @EnvironmentObject var authViewModel: AuthViewModel
     @StateObject private var viewModel = CaregiverDashboardViewModel()
+    @StateObject private var medVM = MedicationViewModel()
+    @StateObject private var activityVM = ActivityViewModel()
     @State private var showingSetup = false
 
     var body: some View {
@@ -48,6 +50,10 @@ struct CaregiverDashboardView: View {
                         .buttonStyle(PlainButtonStyle())
                         .padding(.horizontal, 24)
 
+                        DashboardTodoList(medVM: medVM, activityVM: activityVM, elderlyID: profile.id ?? "")
+                            .padding(.horizontal, 24)
+                            .padding(.top, 16)
+
                         HStack(spacing: 16) {
                             NavigationLink(destination: ElderlyDetailView(elderlyID: profile.id ?? "")) {
                                 Text("View Details →")
@@ -56,7 +62,7 @@ struct CaregiverDashboardView: View {
                             }
                             .buttonStyle(.plain)
 
-                            NavigationLink(destination: WeeklyHealthTrendView()) {
+                            NavigationLink(destination: WeeklyHealthTrendView(elderlyID: profile.id ?? "")) {
                                 Text("View Trends →")
                                     .font(.system(size: 14, weight: .semibold))
                                     .foregroundColor(.strideSecondary)
@@ -64,6 +70,7 @@ struct CaregiverDashboardView: View {
                             .buttonStyle(.plain)
                         }
                         .padding(.horizontal, 24)
+                        .padding(.top, 8)
 
                     } else {
 

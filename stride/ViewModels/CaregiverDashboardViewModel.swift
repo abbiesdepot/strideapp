@@ -81,8 +81,14 @@ class CaregiverDashboardViewModel: ObservableObject {
             notes: notes,
             medicalNotes: medicalNotes,
             familyID: nil, // bakal be set after Family creation
-            stepCount: 0,
-            distanceKM: 0.0,
+            stepCount: nil,
+            distanceKM: nil,
+            heartRate: nil,
+            stressPercentage: nil,
+            sleepAwakeMin: nil,
+            sleepREMMin: nil,
+            sleepCoreMin: nil,
+            sleepDeepMin: nil,
             liveStatus: "green",
             liveStatusReason: "Setup complete",
             createdAt: Date()
@@ -108,19 +114,26 @@ class CaregiverDashboardViewModel: ObservableObject {
                 createdAt: Date()
             )
             
-            _ = try db.collection("family").addDocument(from: newFamily) { error in
-                self.isLoading = false
+            // Pre-generate the family document reference so its ID is known before the closure runs
+            let familyDocRef = db.collection("family").document()
+            let generatedFamilyID = familyDocRef.documentID
+            
+            try familyDocRef.setData(from: newFamily) { error in
                 if let error = error {
+                    self.isLoading = false
                     self.errorMessage = error.localizedDescription
                     completion(false)
                 } else {
-                    // update elderly profile w familyID
+                    // update elderly profile w familyID using the pre-generated ID
                     self.db.collection("elderlyProfiles").document(elderlyID).updateData([
-                        "familyID": newFamily.id ?? ""
-                    ])
-                    completion(true)
+                        "familyID": generatedFamilyID
+                    ]) { _ in
+                        self.fetchDashboardData(caregiverID: caregiverID)
+                        completion(true)
+                    }
                 }
             }
+
         } catch {
             isLoading = false
             errorMessage = error.localizedDescription

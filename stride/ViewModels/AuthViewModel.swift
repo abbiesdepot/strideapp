@@ -80,6 +80,34 @@ class AuthViewModel: ObservableObject {
             self.errorMessage = error.localizedDescription
         }
     }
+    
+    func updateUserProfile(fullName: String, phoneNumber: String, completion: @escaping (Bool) -> Void) {
+        guard let uid = currentUser?.id else {
+            completion(false)
+            return
+        }
+        
+        db.collection("users").document(uid).updateData([
+            "fullName": fullName,
+            "phoneNumber": phoneNumber
+        ]) { [weak self] error in
+            DispatchQueue.main.async {
+                if let error = error {
+                    self?.errorMessage = error.localizedDescription
+                    completion(false)
+                } else {
+                    if var user = self?.currentUser {
+                        user.fullName = fullName
+                        user.phoneNumber = phoneNumber
+                        self?.currentUser = user
+                    }
+                    completion(true)
+                }
+            }
+        }
+    }
+
+
 
     func checkCareCircleMembership(uid: String) {
         db.collection("familyMembers")

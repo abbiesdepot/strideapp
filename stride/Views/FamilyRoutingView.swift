@@ -28,7 +28,7 @@ struct FamilyRoutingView: View {
                             .foregroundColor(.strideTextSecondary)
                     }
                 }
-            } else if hasJoinedFamily {
+            } else if authViewModel.isInCareCircle {
                 FamilyMainView()
             } else {
                 NavigationStack {
@@ -49,23 +49,23 @@ struct FamilyRoutingView: View {
         
         let db = Firestore.firestore()
         
-        // Cek di koleksi "familyMembers" apakah ada dokumen dengan userID ini
+        // Listen to changes in familyMembers for this user
         db.collection("familyMembers")
             .whereField("userID", isEqualTo: userID)
-            .getDocuments { snapshot, error in
+            .addSnapshotListener { snapshot, error in
                 DispatchQueue.main.async {
                     if let error = error {
                         print("Error: \(error.localizedDescription)")
-                        self.hasJoinedFamily = false
+                        authViewModel.isInCareCircle = false
                     } else {
-                        // Jika ada dokumen yang ditemukan, berarti dia sudah join!
-                        self.hasJoinedFamily = !(snapshot?.documents.isEmpty ?? true)
+                        authViewModel.isInCareCircle = !(snapshot?.documents.isEmpty ?? true)
                     }
                     self.isChecking = false
                 }
             }
     }
 }
+
 
 #Preview {
     FamilyRoutingView()

@@ -3,9 +3,9 @@ import FirebaseFirestore
 import Combine
 
 @MainActor
-class MedicationViewModel: ObservableObject {
-    @Published var medications: [Medication] = []
-    @Published var todayLogs: [MedicationLog] = []
+class ActivityViewModel: ObservableObject {
+    @Published var activities: [CareActivity] = []
+    @Published var todayLogs: [CareActivityLog] = []
     @Published var isLoading = false
     @Published var errorMessage: String?
     
@@ -13,11 +13,11 @@ class MedicationViewModel: ObservableObject {
     private var listenerRegistration: ListenerRegistration?
     private var logsListenerRegistration: ListenerRegistration?
     
-    func fetchMedications(elderlyID: String) {
+    func fetchActivities(elderlyID: String) {
         isLoading = true
         listenerRegistration?.remove()
         
-        listenerRegistration = db.collection("medications")
+        listenerRegistration = db.collection("careActivities")
             .whereField("elderlyID", isEqualTo: elderlyID)
             .addSnapshotListener { [weak self] snapshot, error in
                 guard let self = self else { return }
@@ -30,7 +30,7 @@ class MedicationViewModel: ObservableObject {
                 
                 guard let documents = snapshot?.documents else { return }
                 
-                self.medications = documents.compactMap { try? $0.data(as: Medication.self) }
+                self.activities = documents.compactMap { try? $0.data(as: CareActivity.self) }
                     .sorted { $0.scheduleTime < $1.scheduleTime }
             }
     }
@@ -42,7 +42,7 @@ class MedicationViewModel: ObservableObject {
         let startOfToday = calendar.startOfDay(for: Date())
         let startOfTodayTimestamp = Timestamp(date: startOfToday)
         
-        logsListenerRegistration = db.collection("medicationLogs")
+        logsListenerRegistration = db.collection("careActivityLogs")
             .whereField("elderlyID", isEqualTo: elderlyID)
             .whereField("scheduledTime", isGreaterThanOrEqualTo: startOfTodayTimestamp)
             .addSnapshotListener { [weak self] snapshot, error in
@@ -54,15 +54,14 @@ class MedicationViewModel: ObservableObject {
                 }
                 
                 guard let documents = snapshot?.documents else { return }
-                self.todayLogs = documents.compactMap { try? $0.data(as: MedicationLog.self) }
+                self.todayLogs = documents.compactMap { try? $0.data(as: CareActivityLog.self) }
             }
     }
     
-    func addMedication(elderlyID: String, name: String, dosage: String, frequency: String, scheduleTime: String) {
-        let newMed = Medication(
+    func addActivity(elderlyID: String, name: String, frequency: String, scheduleTime: String) {
+        let newAct = CareActivity(
             elderlyID: elderlyID,
             name: name,
-            dosage: dosage,
             frequency: frequency,
             scheduleTime: scheduleTime,
             isEnabled: true,
@@ -70,33 +69,33 @@ class MedicationViewModel: ObservableObject {
         )
         
         do {
-            try db.collection("medications").addDocument(from: newMed)
+            try db.collection("careActivities").addDocument(from: newAct)
         } catch {
             self.errorMessage = error.localizedDescription
         }
     }
     
-    func toggleMedicationStatus(medication: Medication) {
-        guard let id = medication.id else { return }
-        db.collection("medications").document(id).updateData([
-            "isEnabled": !medication.isEnabled
+    func toggleActivityStatus(activity: CareActivity) {
+        guard let id = activity.id else { return }
+        db.collection("careActivities").document(id).updateData([
+            "isEnabled": !activity.isEnabled
         ])
     }
     
-    func takeMedication(medication: Medication) {
-        guard let medID = medication.id else { return }
+    func takeActivity(activity: CareActivity) {
+        guard let actID = activity.id else { return }
         
         let now = Date()
-        let log = MedicationLog(
-            medicationID: medID,
-            elderlyID: medication.elderlyID,
+        let log = CareActivityLog(
+            activityID: actID,
+            elderlyID: activity.elderlyID,
             scheduledTime: now,
             confirmedAt: now,
-            status: "taken"
+            status: "done"
         )
         
         do {
-            let ref = try db.collection("medicationLogs").addDocument(from: log)
+            let ref = try db.collection("careActivityLogs").addDocument(from: log)
             var optimisticLog = log
             optimisticLog.id = ref.documentID
             self.todayLogs.append(optimisticLog)
@@ -105,15 +104,15 @@ class MedicationViewModel: ObservableObject {
         }
     }
     
-    func untakeMedication(medicationID: String) {
-        let matchingLogs = todayLogs.filter { $0.medicationID == medicationID }
+    func untakeActivity(activityID: String) {
+        let matchingLogs = todayLogs.filter { $0.activityID == activityID }
         
         // Optimistic local update
-        self.todayLogs.removeAll { $0.medicationID == medicationID }
+        self.todayLogs.removeAll { $0.activityID == activityID }
         
         for log in matchingLogs {
             guard let logID = log.id else { continue }
-            db.collection("medicationLogs").document(logID).delete() { [weak self] error in
+            db.collection("careActivityLogs").document(logID).delete() { [weak self] error in
                 if let error = error {
                     self?.errorMessage = error.localizedDescription
                 }
@@ -121,8 +120,8 @@ class MedicationViewModel: ObservableObject {
         }
     }
     
-    func deleteMedication(medicationID: String) {
-        db.collection("medications").document(medicationID).delete()
+    func deleteActivity(activityID: String) {
+        db.collection("careActivities").document(activityID).delete()
     }
     
     deinit {

@@ -120,16 +120,18 @@ class CaregiverDashboardViewModel: ObservableObject {
             let generatedFamilyID = familyDocRef.documentID
             
             try familyDocRef.setData(from: newFamily) { error in
-                self.isLoading = false
                 if let error = error {
+                    self.isLoading = false
                     self.errorMessage = error.localizedDescription
                     completion(false)
                 } else {
                     // update elderly profile w familyID using the pre-generated ID
                     self.db.collection("elderlyProfiles").document(elderlyID).updateData([
                         "familyID": generatedFamilyID
-                    ])
-                    completion(true)
+                    ]) { _ in
+                        self.fetchDashboardData(caregiverID: caregiverID)
+                        completion(true)
+                    }
                 }
             }
 

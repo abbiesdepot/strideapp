@@ -8,6 +8,11 @@ struct ElderlyDetailView: View {
     @State private var profile: ElderlyProfile?
     @State private var isLoadingProfile = true
     @State private var selectedTab = 0
+    
+    // Lifted states for toolbar actions
+    @State private var showEditSheet = false
+    @State private var showAddMedSheet = false
+    @State private var showAddActivitySheet = false
 
     var body: some View {
         VStack(spacing: 0) {
@@ -28,11 +33,11 @@ struct ElderlyDetailView: View {
                 Spacer()
             } else if let profileBinding = Binding($profile) {
                 if selectedTab == 0 {
-                    ElderlyOverviewTab(elderlyID: elderlyID, profile: profileBinding, isReadOnly: isReadOnly)
+                    ElderlyOverviewTab(elderlyID: elderlyID, profile: profileBinding, isReadOnly: isReadOnly, showEditSheet: $showEditSheet)
                 } else if selectedTab == 1 {
-                    ElderlyMedicationsTab(elderlyID: elderlyID, isReadOnly: isReadOnly)
+                    ElderlyMedicationsTab(elderlyID: elderlyID, isReadOnly: isReadOnly, showAddMedSheet: $showAddMedSheet)
                 } else if selectedTab == 2 {
-                    ElderlyActivitiesTab(elderlyID: elderlyID, isReadOnly: isReadOnly)
+                    ElderlyActivitiesTab(elderlyID: elderlyID, isReadOnly: isReadOnly, showAddActivitySheet: $showAddActivitySheet)
                 } else {
                     WeeklyHealthTrendView(elderlyID: elderlyID)
                 }
@@ -46,6 +51,25 @@ struct ElderlyDetailView: View {
         .background(Color.strideBackground.ignoresSafeArea())
         .navigationTitle("Profile Details")
         .navigationBarTitleDisplayMode(.inline)
+        .toolbar {
+            if !isReadOnly {
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    if selectedTab == 0 {
+                        Button(action: { showEditSheet = true }) {
+                            Image(systemName: "pencil")
+                        }
+                    } else if selectedTab == 1 {
+                        Button(action: { showAddMedSheet = true }) {
+                            Image(systemName: "plus").fontWeight(.bold)
+                        }
+                    } else if selectedTab == 2 {
+                        Button(action: { showAddActivitySheet = true }) {
+                            Image(systemName: "plus").fontWeight(.bold)
+                        }
+                    }
+                }
+            }
+        }
         .task {
             await loadProfile()
         }
@@ -71,8 +95,8 @@ struct ElderlyDetailView: View {
 struct ElderlyOverviewTab: View {
     let elderlyID: String
     @Binding var profile: ElderlyProfile
-    @State private var showEditSheet = false
     var isReadOnly: Bool = false
+    @Binding var showEditSheet: Bool
 
     var body: some View {
         ScrollView {
@@ -184,24 +208,14 @@ struct ElderlyOverviewTab: View {
                 self.profile = updated
             }
         }
-        .toolbar {
-            if !isReadOnly {
-                ToolbarItem(placement: .navigationBarTrailing) {
-                    Button(action: { showEditSheet = true }) {
-                        Image(systemName: "pencil")
-                    }
-                }
-            }
-        }
     }
 }
 
 struct ElderlyMedicationsTab: View {
     let elderlyID: String
     var isReadOnly: Bool = false
-    
     @StateObject private var medVM = MedicationViewModel()
-    @State private var showAddMedSheet = false
+    @Binding var showAddMedSheet: Bool
     @State private var selectedMedication: Medication? = nil
     @State private var showDeleteConfirmAlert = false
     @State private var medicationToDelete: Medication? = nil
@@ -278,25 +292,14 @@ struct ElderlyMedicationsTab: View {
         } message: {
             Text("This action cannot be undone.")
         }
-        .toolbar {
-            if !isReadOnly {
-                ToolbarItem(placement: .navigationBarTrailing) {
-                    Button(action: { showAddMedSheet = true }) {
-                        Image(systemName: "plus")
-                            .fontWeight(.bold)
-                    }
-                }
-            }
-        }
     }
 }
 
 struct ElderlyActivitiesTab: View {
     let elderlyID: String
     var isReadOnly: Bool = false
-    
     @StateObject private var activityVM = ActivityViewModel()
-    @State private var showAddActivitySheet = false
+    @Binding var showAddActivitySheet: Bool
     @State private var selectedActivity: CareActivity? = nil
     @State private var showDeleteActivityAlert = false
     @State private var activityToDelete: CareActivity? = nil
@@ -372,16 +375,6 @@ struct ElderlyActivitiesTab: View {
             }
         } message: {
             Text("This action cannot be undone.")
-        }
-        .toolbar {
-            if !isReadOnly {
-                ToolbarItem(placement: .navigationBarTrailing) {
-                    Button(action: { showAddActivitySheet = true }) {
-                        Image(systemName: "plus")
-                            .fontWeight(.bold)
-                    }
-                }
-            }
         }
     }
 }

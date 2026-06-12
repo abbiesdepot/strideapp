@@ -156,9 +156,11 @@ struct DashboardTodoList: View {
             
             Spacer()
             
-            Image(systemName: "circle")
-                .font(.system(size: 26))
-                .foregroundColor(Color.stridePrimary)
+            if !isReadOnly {
+                Image(systemName: "circle")
+                    .font(.system(size: 26))
+                    .foregroundColor(Color.stridePrimary)
+            }
         }
         .padding(.horizontal, 20)
         .padding(.vertical, 18)
@@ -207,9 +209,11 @@ struct DashboardTodoList: View {
             
             Spacer()
             
-            Image(systemName: "checkmark.circle.fill")
-                .font(.system(size: 26))
-                .foregroundColor(Color.stridePrimary)
+            if !isReadOnly {
+                Image(systemName: "checkmark.circle.fill")
+                    .font(.system(size: 26))
+                    .foregroundColor(Color.stridePrimary)
+            }
         }
         .padding(.horizontal, 20)
         .padding(.vertical, 18)

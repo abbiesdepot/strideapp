@@ -96,7 +96,10 @@ class MedicationViewModel: ObservableObject {
         )
         
         do {
-            try db.collection("medicationLogs").addDocument(from: log)
+            let ref = try db.collection("medicationLogs").addDocument(from: log)
+            var optimisticLog = log
+            optimisticLog.id = ref.documentID
+            self.todayLogs.append(optimisticLog)
         } catch {
             self.errorMessage = error.localizedDescription
         }
@@ -104,6 +107,10 @@ class MedicationViewModel: ObservableObject {
     
     func untakeMedication(medicationID: String) {
         let matchingLogs = todayLogs.filter { $0.medicationID == medicationID }
+        
+        // Optimistic local update
+        self.todayLogs.removeAll { $0.medicationID == medicationID }
+        
         for log in matchingLogs {
             guard let logID = log.id else { continue }
             db.collection("medicationLogs").document(logID).delete() { [weak self] error in

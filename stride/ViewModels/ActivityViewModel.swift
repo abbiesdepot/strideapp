@@ -95,7 +95,10 @@ class ActivityViewModel: ObservableObject {
         )
         
         do {
-            try db.collection("careActivityLogs").addDocument(from: log)
+            let ref = try db.collection("careActivityLogs").addDocument(from: log)
+            var optimisticLog = log
+            optimisticLog.id = ref.documentID
+            self.todayLogs.append(optimisticLog)
         } catch {
             self.errorMessage = error.localizedDescription
         }
@@ -103,6 +106,10 @@ class ActivityViewModel: ObservableObject {
     
     func untakeActivity(activityID: String) {
         let matchingLogs = todayLogs.filter { $0.activityID == activityID }
+        
+        // Optimistic local update
+        self.todayLogs.removeAll { $0.activityID == activityID }
+        
         for log in matchingLogs {
             guard let logID = log.id else { continue }
             db.collection("careActivityLogs").document(logID).delete() { [weak self] error in

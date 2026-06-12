@@ -79,7 +79,6 @@ class CaregiverDashboardViewModel: ObservableObject {
             weight: weight,
             bloodType: bloodType,
             notes: notes,
-            photoURL: nil,
             medicalNotes: medicalNotes,
             familyID: nil, // bakal be set after Family creation
             stepCount: 0,

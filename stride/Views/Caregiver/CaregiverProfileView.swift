@@ -5,6 +5,7 @@ struct CaregiverProfileView: View {
     @StateObject private var dashboardVM = CaregiverDashboardViewModel()
     @StateObject private var peopleVM = PeopleViewModel()
     
+    @State private var showingEditSheet = false
 
 
     var body: some View {
@@ -29,6 +30,9 @@ struct CaregiverProfileView: View {
             }
             .navigationTitle("Profile")
             .navigationBarTitleDisplayMode(.large)
+            .sheet(isPresented: $showingEditSheet) {
+                EditFamilyProfileSheet(authViewModel: authViewModel)
+            }
         }
         .onAppear {
             if let uid = authViewModel.currentUser?.id {
@@ -72,6 +76,12 @@ struct CaregiverProfileView: View {
                     .background(Color.stridePrimary.opacity(0.15))
                     .cornerRadius(12)
             }
+            
+            Button("Edit Profile") {
+                showingEditSheet = true
+            }
+            .font(.system(size: 14, weight: .semibold))
+            .foregroundColor(.stridePrimary)
         }
         .padding(20)
         .frame(maxWidth: .infinity)
@@ -167,7 +177,7 @@ struct CaregiverProfileView: View {
 
             if let profile = dashboardVM.elderlyProfile {
                 NavigationLink(destination: ElderlyDetailView(elderlyID: profile.id ?? "")) {
-                    Label("Manage Profile", systemImage: "person.crop.rectangle")
+                    Label("Manage Elderly Profile", systemImage: "person.crop.rectangle")
                         .font(.system(size: 15, weight: .semibold))
                         .foregroundColor(.stridePrimary)
                         .frame(maxWidth: .infinity)

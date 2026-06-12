@@ -12,7 +12,8 @@ final class WCSessionPayloadTests: XCTestCase {
                 "elderlyID": elderlyID,
                 "timestamp": timestamp
             ]
-
+            
+            //try to read this back as a string
             let recoveredElderlyID = payload["elderlyID"] as? String
             let recoveredTimestamp = payload["timestamp"] as? Double
 

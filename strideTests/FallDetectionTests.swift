@@ -6,6 +6,7 @@ private func isFall(gForce: Double, rotationRate: Double) -> Bool {
 
 final class FallDetectionTests: XCTestCase {
     func testProperty1_dualThresholdTriggersFall() {
+        //runs loop 100 times
         for _ in 0..<100 {
             let gForce = Double.random(in: 3.001...20.0)
             let rotationRate = Double.random(in: 2.001...20.0)

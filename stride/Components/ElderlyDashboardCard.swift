@@ -96,7 +96,6 @@ struct StatItem: View {
             id: "123",
             fullName: "Robert Smith",
             age: 78,
-            photoURL: nil,
             medicalNotes: "Hypertension",
             familyID: "fam123",
             stepCount: 3200,

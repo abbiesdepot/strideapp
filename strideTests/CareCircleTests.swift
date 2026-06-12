@@ -2,8 +2,7 @@
 //  CareCircleTests.swift
 //  strideTests
 //
-//  Property 9: Care circle join/leave is a round trip
-//  Validates: Requirements 21.1, 21.2, 21.3
+//  Property 9: Care circle join/leave
 //
 
 import XCTest
@@ -62,3 +61,5 @@ final class CareCircleTests: XCTestCase {
         }
     }
 }
+
+//round trip -> join n leave should leave u exactly where u started emoty

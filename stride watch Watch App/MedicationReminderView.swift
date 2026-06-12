@@ -74,7 +74,7 @@ struct MedicationReminderView: View {
         content.body = "Time to take your medication."
         content.sound = .default
 
-        let trigger = UNTimeIntervalNotificationTrigger(timeInterval: 600, repeats: false)
+        let trigger = UNTimeIntervalNotificationTrigger(timeInterval: 5, repeats: false)
         let request = UNNotificationRequest(
             identifier: UUID().uuidString,
             content: content,

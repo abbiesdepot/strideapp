@@ -131,6 +131,25 @@ struct ContentView: View {
                                     .foregroundColor(.orange)
                                     .multilineTextAlignment(.center)
                                     .padding(.horizontal, 8)
+
+                                // hrsnya triggered by a push notification, so this makes it presentable during a live demo
+                                NavigationLink(destination:
+                                    MedicationReminderView(medicationID: "demo-med-001")
+                                        .environmentObject(sensorManager)
+                                ) {
+                                    HStack(spacing: 4) {
+                                        Image(systemName: "pill.fill")
+                                        Text("Demo Medication")
+                                            .font(.system(size: 13, weight: .semibold))
+                                    }
+                                    .foregroundColor(.white)
+                                    .frame(maxWidth: .infinity)
+                                    .padding(.vertical, 8)
+                                    .background(Color(hex: "#4DA1A9"))
+                                    .cornerRadius(10)
+                                }
+                                .buttonStyle(.plain)
+                                .padding(.horizontal, 8)
                             }
                         }
 

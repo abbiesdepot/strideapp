@@ -3,6 +3,7 @@ import FirebaseFirestore
 
 struct ElderlyDetailView: View {
     let elderlyID: String
+    var isReadOnly: Bool = false
 
     @State private var profile: ElderlyProfile?
     @State private var isLoadingProfile = true
@@ -27,11 +28,11 @@ struct ElderlyDetailView: View {
                 Spacer()
             } else if let profileBinding = Binding($profile) {
                 if selectedTab == 0 {
-                    ElderlyOverviewTab(elderlyID: elderlyID, profile: profileBinding)
+                    ElderlyOverviewTab(elderlyID: elderlyID, profile: profileBinding, isReadOnly: isReadOnly)
                 } else if selectedTab == 1 {
-                    ElderlyMedicationsTab(elderlyID: elderlyID)
+                    ElderlyMedicationsTab(elderlyID: elderlyID, isReadOnly: isReadOnly)
                 } else if selectedTab == 2 {
-                    ElderlyActivitiesTab(elderlyID: elderlyID)
+                    ElderlyActivitiesTab(elderlyID: elderlyID, isReadOnly: isReadOnly)
                 } else {
                     WeeklyHealthTrendView(elderlyID: elderlyID)
                 }
@@ -71,6 +72,7 @@ struct ElderlyOverviewTab: View {
     let elderlyID: String
     @Binding var profile: ElderlyProfile
     @State private var showEditSheet = false
+    var isReadOnly: Bool = false
 
     var body: some View {
         ScrollView {
@@ -183,9 +185,11 @@ struct ElderlyOverviewTab: View {
             }
         }
         .toolbar {
-            ToolbarItem(placement: .navigationBarTrailing) {
-                Button(action: { showEditSheet = true }) {
-                    Image(systemName: "pencil")
+            if !isReadOnly {
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button(action: { showEditSheet = true }) {
+                        Image(systemName: "pencil")
+                    }
                 }
             }
         }
@@ -194,6 +198,7 @@ struct ElderlyOverviewTab: View {
 
 struct ElderlyMedicationsTab: View {
     let elderlyID: String
+    var isReadOnly: Bool = false
     
     @StateObject private var medVM = MedicationViewModel()
     @State private var showAddMedSheet = false
@@ -223,21 +228,28 @@ struct ElderlyMedicationsTab: View {
             } else {
                 List {
                     ForEach(medVM.medications) { med in
-                        Button(action: { selectedMedication = med }) {
+                        if isReadOnly {
                             MedicationRow(medication: med)
-                        }
-                        .buttonStyle(.plain)
-                        .swipeActions(edge: .trailing) {
-                            Button(role: .destructive) {
-                                medicationToDelete = med
-                                showDeleteConfirmAlert = true
-                            } label: {
-                                Label("Delete", systemImage: "trash")
+                                .listRowBackground(Color.strideBackground)
+                                .listRowSeparator(.hidden)
+                                .listRowInsets(EdgeInsets(top: 6, leading: 20, bottom: 6, trailing: 20))
+                        } else {
+                            Button(action: { selectedMedication = med }) {
+                                MedicationRow(medication: med)
                             }
+                            .buttonStyle(.plain)
+                            .swipeActions(edge: .trailing) {
+                                Button(role: .destructive) {
+                                    medicationToDelete = med
+                                    showDeleteConfirmAlert = true
+                                } label: {
+                                    Label("Delete", systemImage: "trash")
+                                }
+                            }
+                            .listRowBackground(Color.strideBackground)
+                            .listRowSeparator(.hidden)
+                            .listRowInsets(EdgeInsets(top: 6, leading: 20, bottom: 6, trailing: 20))
                         }
-                        .listRowBackground(Color.strideBackground)
-                        .listRowSeparator(.hidden)
-                        .listRowInsets(EdgeInsets(top: 6, leading: 20, bottom: 6, trailing: 20))
                     }
                 }
                 .listStyle(.plain)
@@ -267,10 +279,12 @@ struct ElderlyMedicationsTab: View {
             Text("This action cannot be undone.")
         }
         .toolbar {
-            ToolbarItem(placement: .navigationBarTrailing) {
-                Button(action: { showAddMedSheet = true }) {
-                    Image(systemName: "plus")
-                        .fontWeight(.bold)
+            if !isReadOnly {
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button(action: { showAddMedSheet = true }) {
+                        Image(systemName: "plus")
+                            .fontWeight(.bold)
+                    }
                 }
             }
         }
@@ -279,6 +293,7 @@ struct ElderlyMedicationsTab: View {
 
 struct ElderlyActivitiesTab: View {
     let elderlyID: String
+    var isReadOnly: Bool = false
     
     @StateObject private var activityVM = ActivityViewModel()
     @State private var showAddActivitySheet = false
@@ -308,21 +323,28 @@ struct ElderlyActivitiesTab: View {
             } else {
                 List {
                     ForEach(activityVM.activities) { act in
-                        Button(action: { selectedActivity = act }) {
+                        if isReadOnly {
                             ActivityRow(activity: act)
-                        }
-                        .buttonStyle(.plain)
-                        .swipeActions(edge: .trailing) {
-                            Button(role: .destructive) {
-                                activityToDelete = act
-                                showDeleteActivityAlert = true
-                            } label: {
-                                Label("Delete", systemImage: "trash")
+                                .listRowBackground(Color.strideBackground)
+                                .listRowSeparator(.hidden)
+                                .listRowInsets(EdgeInsets(top: 6, leading: 20, bottom: 6, trailing: 20))
+                        } else {
+                            Button(action: { selectedActivity = act }) {
+                                ActivityRow(activity: act)
                             }
+                            .buttonStyle(.plain)
+                            .swipeActions(edge: .trailing) {
+                                Button(role: .destructive) {
+                                    activityToDelete = act
+                                    showDeleteActivityAlert = true
+                                } label: {
+                                    Label("Delete", systemImage: "trash")
+                                }
+                            }
+                            .listRowBackground(Color.strideBackground)
+                            .listRowSeparator(.hidden)
+                            .listRowInsets(EdgeInsets(top: 6, leading: 20, bottom: 6, trailing: 20))
                         }
-                        .listRowBackground(Color.strideBackground)
-                        .listRowSeparator(.hidden)
-                        .listRowInsets(EdgeInsets(top: 6, leading: 20, bottom: 6, trailing: 20))
                     }
                 }
                 .listStyle(.plain)
@@ -352,10 +374,12 @@ struct ElderlyActivitiesTab: View {
             Text("This action cannot be undone.")
         }
         .toolbar {
-            ToolbarItem(placement: .navigationBarTrailing) {
-                Button(action: { showAddActivitySheet = true }) {
-                    Image(systemName: "plus")
-                        .fontWeight(.bold)
+            if !isReadOnly {
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button(action: { showAddActivitySheet = true }) {
+                        Image(systemName: "plus")
+                            .fontWeight(.bold)
+                    }
                 }
             }
         }

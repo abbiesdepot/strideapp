@@ -44,6 +44,9 @@ struct FamilyProfileView: View {
                     })
                 }
             }
+            .sheet(isPresented: $showingEditSheet) {
+                EditFamilyProfileSheet(authViewModel: authViewModel)
+            }
             .confirmationDialog(
                 "Leave Care Circle",
                 isPresented: $showLeaveConfirm,
@@ -125,7 +128,7 @@ struct FamilyProfileView: View {
                     .padding(.horizontal, 20)
             } else {
                 ForEach(profileVM.careCircles) { circle in
-                    NavigationLink(destination: DailySummaryView(profile: circle.elderlyProfile)) {
+                    NavigationLink(destination: ElderlyDetailView(elderlyID: circle.elderlyProfile.id ?? "", isReadOnly: true)) {
                         careCircleRow(circle)
                     }
                     .padding(.horizontal, 20)
@@ -194,3 +197,70 @@ struct FamilyProfileView: View {
         .padding(.horizontal, 20)
     }
 }
+
+struct EditFamilyProfileSheet: View {
+    @ObservedObject var authViewModel: AuthViewModel
+    @Environment(\.dismiss) var dismiss
+    
+    @State private var fullName: String = ""
+    @State private var phoneNumber: String = ""
+    @State private var isSaving = false
+    @State private var showingError = false
+    
+    var body: some View {
+        NavigationStack {
+            Form {
+                Section(header: Text("Profile Info")) {
+                    TextField("Full Name", text: $fullName)
+                        .disabled(isSaving)
+                    TextField("Phone Number", text: $phoneNumber)
+                        .keyboardType(.phonePad)
+                        .disabled(isSaving)
+                }
+            }
+            .navigationTitle("Edit Profile")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Cancel") {
+                        dismiss()
+                    }
+                    .disabled(isSaving)
+                }
+                ToolbarItem(placement: .confirmationAction) {
+                    Button {
+                        isSaving = true
+                        authViewModel.updateUserProfile(fullName: fullName, phoneNumber: phoneNumber) { success in
+                            isSaving = false
+                            if success {
+                                dismiss()
+                            } else {
+                                showingError = true
+                            }
+                        }
+                    } label: {
+                        if isSaving {
+                            ProgressView()
+                        } else {
+                            Text("Save")
+                        }
+                    }
+                    .disabled(fullName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || isSaving)
+                }
+            }
+            .alert("Failed to Update Profile", isPresented: $showingError) {
+                Button("OK", role: .cancel) {}
+            } message: {
+                Text(authViewModel.errorMessage ?? "An unknown error occurred.")
+            }
+            .onAppear {
+                if let user = authViewModel.currentUser {
+                    fullName = user.fullName
+                    phoneNumber = user.phoneNumber
+                }
+            }
+        }
+    }
+}
+
+

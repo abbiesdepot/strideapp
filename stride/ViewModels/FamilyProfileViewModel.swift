@@ -18,11 +18,17 @@ class FamilyProfileViewModel: ObservableObject {
     private var db = Firestore.firestore()
 
 
+    private var membersListener: ListenerRegistration?
+    private var profilesListener: ListenerRegistration?
+
     func fetchCareCircles(userID: String) {
         isLoading = true
-        db.collection("familyMembers")
+        membersListener?.remove()
+        profilesListener?.remove()
+        
+        membersListener = db.collection("familyMembers")
             .whereField("userID", isEqualTo: userID)
-            .getDocuments { [weak self] snapshot, error in
+            .addSnapshotListener { [weak self] snapshot, error in
                 guard let self = self else { return }
 
                 if let error = error {
@@ -66,10 +72,19 @@ class FamilyProfileViewModel: ObservableObject {
     }
 
     private func resolveProfiles(members: [(String, FamilyMember)], familyIDs: [String]) {
-        db.collection("elderlyProfiles")
+        profilesListener?.remove()
+        profilesListener = db.collection("elderlyProfiles")
             .whereField("familyID", in: familyIDs)
-            .getDocuments { [weak self] snapshot, error in
+            .addSnapshotListener { [weak self] snapshot, error in
                 guard let self = self else { return }
+
+                if let error = error {
+                    DispatchQueue.main.async {
+                        self.isLoading = false
+                        self.errorMessage = error.localizedDescription
+                    }
+                    return
+                }
 
                 let profiles = snapshot?.documents.compactMap { try? $0.data(as: ElderlyProfile.self) } ?? []
 
@@ -91,4 +106,10 @@ class FamilyProfileViewModel: ObservableObject {
                 }
             }
     }
+
+    deinit {
+        membersListener?.remove()
+        profilesListener?.remove()
+    }
 }
+

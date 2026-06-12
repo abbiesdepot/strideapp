@@ -115,19 +115,24 @@ class CaregiverDashboardViewModel: ObservableObject {
                 createdAt: Date()
             )
             
-            _ = try db.collection("family").addDocument(from: newFamily) { error in
+            // Pre-generate the family document reference so its ID is known before the closure runs
+            let familyDocRef = db.collection("family").document()
+            let generatedFamilyID = familyDocRef.documentID
+            
+            try familyDocRef.setData(from: newFamily) { error in
                 self.isLoading = false
                 if let error = error {
                     self.errorMessage = error.localizedDescription
                     completion(false)
                 } else {
-                    // update elderly profile w familyID
+                    // update elderly profile w familyID using the pre-generated ID
                     self.db.collection("elderlyProfiles").document(elderlyID).updateData([
-                        "familyID": newFamily.id ?? ""
+                        "familyID": generatedFamilyID
                     ])
                     completion(true)
                 }
             }
+
         } catch {
             isLoading = false
             errorMessage = error.localizedDescription

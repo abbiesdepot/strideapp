@@ -10,12 +10,19 @@ class FamilyDashboardViewModel: ObservableObject {
     
     private var db = Firestore.firestore()
     
+    private var membersListener: ListenerRegistration?
+    private var profilesListener: ListenerRegistration?
+
     func fetchElderlyProfiles(userID: String) {
         isLoading = true
-        // fetch from familyMembers where userID == userID
-        db.collection("familyMembers")
+        
+        // Remove any existing listeners
+        membersListener?.remove()
+        profilesListener?.remove()
+        
+        membersListener = db.collection("familyMembers")
             .whereField("userID", isEqualTo: userID)
-            .getDocuments { [weak self] snapshot, error in
+            .addSnapshotListener { [weak self] snapshot, error in
                 guard let self = self else { return }
                 
                 if let error = error {
@@ -26,6 +33,7 @@ class FamilyDashboardViewModel: ObservableObject {
                 
                 guard let documents = snapshot?.documents, !documents.isEmpty else {
                     self.isLoading = false
+                    self.elderlyProfiles = []
                     return
                 }
                 
@@ -33,11 +41,13 @@ class FamilyDashboardViewModel: ObservableObject {
                 
                 if familyIDs.isEmpty {
                     self.isLoading = false
+                    self.elderlyProfiles = []
                     return
                 }
                 
-                // fetch the elderly profiles (w the assumption 1 elderly per family)
-                self.db.collection("elderlyProfiles")
+                // Fetch profiles in real-time
+                self.profilesListener?.remove()
+                self.profilesListener = self.db.collection("elderlyProfiles")
                     .whereField("familyID", in: familyIDs)
                     .addSnapshotListener { snapshot, error in
                         self.isLoading = false
@@ -51,6 +61,12 @@ class FamilyDashboardViewModel: ObservableObject {
                     }
             }
     }
+    
+    deinit {
+        membersListener?.remove()
+        profilesListener?.remove()
+    }
+
     
     func joinCareCircle(inviteCode: String, userID: String, completion: @escaping (Bool, String?) -> Void) {
         isLoading = true

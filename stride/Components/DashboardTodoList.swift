@@ -14,6 +14,7 @@ struct DashboardTodoList: View {
     @ObservedObject var medVM: MedicationViewModel
     @ObservedObject var activityVM: ActivityViewModel
     let elderlyID: String
+    var isReadOnly: Bool = false
     
     private var todoTasks: [UnifiedTask] {
         let medTasks = medVM.medications.filter { med in
@@ -138,85 +139,103 @@ struct DashboardTodoList: View {
     }
     
     @ViewBuilder
-    private func todoCard(for task: UnifiedTask) -> some View {
-        Button(action: {
-            withAnimation {
-                if task.isMedication {
-                    if let med = task.medication {
-                        medVM.takeMedication(medication: med)
-                    }
-                } else {
-                    if let act = task.activity {
-                        activityVM.takeActivity(activity: act)
-                    }
-                }
-            }
-        }) {
-            HStack(spacing: 16) {
-                VStack(alignment: .leading, spacing: 4) {
-                    Text(task.name)
-                        .font(.system(size: 18, weight: .bold))
-                        .foregroundColor(Color.stridePrimary)
-                    
-                    Text("\(task.scheduleTime) - \(task.subtitle)")
-                        .font(.system(size: 14))
-                        .foregroundColor(.strideTextSecondary)
-                }
-                
-                Spacer()
-                
-                Image(systemName: "circle")
-                    .font(.system(size: 26))
+    private func todoCardContent(for task: UnifiedTask) -> some View {
+        HStack(spacing: 16) {
+            VStack(alignment: .leading, spacing: 4) {
+                Text(task.name)
+                    .font(.system(size: 18, weight: .bold))
                     .foregroundColor(Color.stridePrimary)
+                
+                Text("\(task.scheduleTime) - \(task.subtitle)")
+                    .font(.system(size: 14))
+                    .foregroundColor(.strideTextSecondary)
             }
-            .padding(.horizontal, 20)
-            .padding(.vertical, 18)
-            .background(Color.strideCardWhite)
-            .cornerRadius(StrideTheme.cornerRadiusCard)
-            .shadow(color: StrideTheme.shadowColor, radius: StrideTheme.shadowRadius, x: 0, y: 4)
+            
+            Spacer()
+            
+            Image(systemName: "circle")
+                .font(.system(size: 26))
+                .foregroundColor(Color.stridePrimary)
         }
-        .buttonStyle(.plain)
+        .padding(.horizontal, 20)
+        .padding(.vertical, 18)
+        .background(Color.strideCardWhite)
+        .cornerRadius(StrideTheme.cornerRadiusCard)
+        .shadow(color: StrideTheme.shadowColor, radius: StrideTheme.shadowRadius, x: 0, y: 4)
+    }
+    
+    @ViewBuilder
+    private func todoCard(for task: UnifiedTask) -> some View {
+        if isReadOnly {
+            todoCardContent(for: task)
+        } else {
+            Button(action: {
+                withAnimation {
+                    if task.isMedication {
+                        if let med = task.medication {
+                            medVM.takeMedication(medication: med)
+                        }
+                    } else {
+                        if let act = task.activity {
+                            activityVM.takeActivity(activity: act)
+                        }
+                    }
+                }
+            }) {
+                todoCardContent(for: task)
+            }
+            .buttonStyle(.plain)
+        }
+    }
+    
+    @ViewBuilder
+    private func recentCardContent(for task: UnifiedTask) -> some View {
+        HStack(spacing: 16) {
+            VStack(alignment: .leading, spacing: 4) {
+                Text(task.name)
+                    .font(.system(size: 18, weight: .bold))
+                    .foregroundColor(Color.stridePrimary.opacity(0.6))
+                    .strikethrough()
+                
+                Text("\(task.scheduleTime) - \(task.subtitle)")
+                    .font(.system(size: 14))
+                    .foregroundColor(.strideTextSecondary.opacity(0.6))
+            }
+            
+            Spacer()
+            
+            Image(systemName: "checkmark.circle.fill")
+                .font(.system(size: 26))
+                .foregroundColor(Color.stridePrimary)
+        }
+        .padding(.horizontal, 20)
+        .padding(.vertical, 18)
+        .background(Color.strideCardWhite)
+        .cornerRadius(StrideTheme.cornerRadiusCard)
+        .shadow(color: StrideTheme.shadowColor, radius: StrideTheme.shadowRadius, x: 0, y: 4)
     }
     
     @ViewBuilder
     private func recentCard(for task: UnifiedTask) -> some View {
-        Button(action: {
-            withAnimation {
-                if task.isMedication {
-                    if let medID = task.medication?.id {
-                        medVM.untakeMedication(medicationID: medID)
-                    }
-                } else {
-                    if let actID = task.activity?.id {
-                        activityVM.untakeActivity(activityID: actID)
+        if isReadOnly {
+            recentCardContent(for: task)
+        } else {
+            Button(action: {
+                withAnimation {
+                    if task.isMedication {
+                        if let medID = task.medication?.id {
+                            medVM.untakeMedication(medicationID: medID)
+                        }
+                    } else {
+                        if let actID = task.activity?.id {
+                            activityVM.untakeActivity(activityID: actID)
+                        }
                     }
                 }
+            }) {
+                recentCardContent(for: task)
             }
-        }) {
-            HStack(spacing: 16) {
-                VStack(alignment: .leading, spacing: 4) {
-                    Text(task.name)
-                        .font(.system(size: 18, weight: .bold))
-                        .foregroundColor(Color.stridePrimary.opacity(0.6))
-                        .strikethrough()
-                    
-                    Text("\(task.scheduleTime) - \(task.subtitle)")
-                        .font(.system(size: 14))
-                        .foregroundColor(.strideTextSecondary.opacity(0.6))
-                }
-                
-                Spacer()
-                
-                Image(systemName: "checkmark.circle.fill")
-                    .font(.system(size: 26))
-                    .foregroundColor(Color.stridePrimary)
-            }
-            .padding(.horizontal, 20)
-            .padding(.vertical, 18)
-            .background(Color.strideCardWhite)
-            .cornerRadius(StrideTheme.cornerRadiusCard)
-            .shadow(color: StrideTheme.shadowColor, radius: StrideTheme.shadowRadius, x: 0, y: 4)
+            .buttonStyle(.plain)
         }
-        .buttonStyle(.plain)
     }
 }

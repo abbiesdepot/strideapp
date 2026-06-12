@@ -62,7 +62,14 @@ class PeopleViewModel: ObservableObject {
                 
                 dispatchGroup.notify(queue: .main) {
                     self.isLoading = false
-                    self.familyMembers = tempMembers.sorted { ($0.joinedAt ?? Date.distantPast) < ($1.joinedAt ?? Date.distantPast) }
+                    
+                    // Deduplicate by userID (which is detail.id)
+                    var uniqueDetails: [String: FamilyMemberDetail] = [:]
+                    for member in tempMembers {
+                        uniqueDetails[member.id] = member
+                    }
+                    
+                    self.familyMembers = Array(uniqueDetails.values).sorted { ($0.joinedAt ?? Date.distantPast) < ($1.joinedAt ?? Date.distantPast) }
                 }
             }
     }

@@ -79,18 +79,21 @@ class FamilyDashboardViewModel: ObservableObject {
                 
                 if let error = error {
                     self.isLoading = false
+                    self.errorMessage = error.localizedDescription
                     completion(false, error.localizedDescription)
                     return
                 }
                 
                 guard let document = snapshot?.documents.first else {
                     self.isLoading = false
+                    self.errorMessage = "Invalid invite code. Please try again."
                     completion(false, "Invalid invite code. Please try again.")
                     return
                 }
                 
                 guard let family = try? document.data(as: Family.self), let familyID = family.id else {
                     self.isLoading = false
+                    self.errorMessage = "Error parsing family data."
                     completion(false, "Error parsing family data.")
                     return
                 }
@@ -102,8 +105,10 @@ class FamilyDashboardViewModel: ObservableObject {
                     try self.db.collection("familyMembers").addDocument(from: newMember) { error in
                         self.isLoading = false
                         if let error = error {
+                            self.errorMessage = error.localizedDescription
                             completion(false, error.localizedDescription)
                         } else {
+                            self.errorMessage = nil
                             // refresh the dashboard
                             self.fetchElderlyProfiles(userID: userID)
                             completion(true, nil)
@@ -111,6 +116,7 @@ class FamilyDashboardViewModel: ObservableObject {
                     }
                 } catch {
                     self.isLoading = false
+                    self.errorMessage = error.localizedDescription
                     completion(false, error.localizedDescription)
                 }
             }

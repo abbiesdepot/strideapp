@@ -136,10 +136,6 @@ struct JoinCareCircleView: View {
                 }
             }
         }
-        .navigationDestination(isPresented: $isSuccess) {
-            FamilyMainView()
-                .navigationBarBackButtonHidden(true)
-        }
     }
 }
 

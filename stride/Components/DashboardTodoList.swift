@@ -111,6 +111,7 @@ struct DashboardTodoList: View {
                     }
                 }
             }
+            .frame(maxWidth: .infinity, alignment: .leading)
             
             // RECENT SECTION
             VStack(alignment: .leading, spacing: 12) {
@@ -129,7 +130,9 @@ struct DashboardTodoList: View {
                     }
                 }
             }
+            .frame(maxWidth: .infinity, alignment: .leading)
         }
+        .frame(maxWidth: .infinity, alignment: .leading)
         .onAppear {
             medVM.fetchMedications(elderlyID: elderlyID)
             medVM.fetchTodayLogs(elderlyID: elderlyID)
